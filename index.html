@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA Quest: Minimum Cost Subarrays</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --accent3: #f472b6;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #facc15;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+      --radius: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ---- Top Bar ---- */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface2);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar h1 { font-size: 1.2rem; color: var(--accent); }
+    .topbar .xp-bar {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .topbar .xp-bar .xp-track {
+      width: 200px; height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden;
+    }
+    .topbar .xp-bar .xp-fill {
+      height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width .5s ease;
+    }
+    .topbar .xp-label { font-size: .85rem; color: var(--text-dim); }
+
+    /* ---- Level Nav ---- */
+    .level-nav {
+      display: flex; justify-content: center; gap: 8px; padding: 20px;
+      flex-wrap: wrap;
+    }
+    .level-btn {
+      width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--surface2);
+      background: var(--surface); color: var(--text-dim); font-weight: 700;
+      cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; font-size: .95rem;
+    }
+    .level-btn.unlocked { border-color: var(--accent); color: var(--accent); }
+    .level-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .level-btn.completed { background: var(--green); color: var(--bg); border-color: var(--green); }
+    .level-btn:not(.unlocked):not(.active):not(.completed) { opacity: .45; cursor: not-allowed; }
+
+    /* ---- Main Content ---- */
+    .main { max-width: 960px; margin: 0 auto; padding: 20px 24px 60px; }
+
+    .level-container { display: none; }
+    .level-container.active { display: block; animation: fadeIn .4s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+    .level-header {
+      text-align: center; margin-bottom: 24px;
+    }
+    .level-header .badge {
+      display: inline-block; font-size: .75rem; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px;
+      background: var(--accent2); color: white; margin-bottom: 8px;
+    }
+    .level-header h2 { font-size: 1.6rem; margin-bottom: 6px; }
+    .level-header p { color: var(--text-dim); font-size: .95rem; max-width: 600px; margin: 0 auto; }
+
+    /* ---- Cards ---- */
+    .card {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 24px; margin-bottom: 20px;
+      border: 1px solid var(--surface2);
+    }
+    .card h3 { color: var(--accent); margin-bottom: 12px; font-size: 1.1rem; }
+    .card p, .card li { line-height: 1.65; color: var(--text-dim); }
+    .card ul { padding-left: 20px; }
+    .card li { margin-bottom: 4px; }
+
+    /* ---- Array Visualization ---- */
+    .array-vis {
+      display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;
+      margin: 16px 0;
+    }
+    .arr-cell {
+      width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;
+      background: var(--surface2); border-radius: 8px; font-weight: 700; font-size: 1rem;
+      position: relative; transition: all .25s; cursor: default;
+      border: 2px solid transparent;
+    }
+    .arr-cell .idx {
+      position: absolute; bottom: -18px; font-size: .65rem; color: var(--text-dim);
+    }
+    .arr-cell.selected { border-color: var(--accent); background: rgba(56,189,248,.15); }
+    .arr-cell.split { border-color: var(--yellow); background: rgba(250,204,21,.12); }
+    .arr-cell.highlight { border-color: var(--green); background: rgba(74,222,128,.12); }
+    .arr-cell.window { border-color: var(--accent2); background: rgba(129,140,248,.10); }
+    .arr-cell.fade { opacity: .35; }
+    .arr-cell.clickable { cursor: pointer; }
+    .arr-cell.clickable:hover { transform: scale(1.1); border-color: var(--accent); }
+
+    /* ---- Subarray coloring ---- */
+    .arr-cell.sub0 { border-color: #38bdf8; background: rgba(56,189,248,.15); }
+    .arr-cell.sub1 { border-color: #4ade80; background: rgba(74,222,128,.12); }
+    .arr-cell.sub2 { border-color: #facc15; background: rgba(250,204,21,.12); }
+    .arr-cell.sub3 { border-color: #f472b6; background: rgba(244,114,182,.12); }
+    .arr-cell.sub4 { border-color: #c084fc; background: rgba(192,132,252,.12); }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 22px; border-radius: 8px; border: none;
+      font-weight: 600; font-size: .9rem; cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-primary { background: var(--accent); color: var(--bg); }
+    .btn-primary:hover { background: #7dd3fc; }
+    .btn-secondary { background: var(--surface2); color: var(--text); }
+    .btn-secondary:hover { background: #475569; }
+    .btn-success { background: var(--green); color: var(--bg); }
+    .btn-success:hover { background: #86efac; }
+    .btn-danger { background: var(--red); color: white; }
+    .btn-sm { padding: 6px 14px; font-size: .82rem; }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+
+    /* ---- Quiz ---- */
+    .quiz-option {
+      display: block; width: 100%; text-align: left;
+      padding: 12px 16px; margin: 8px 0; border-radius: 8px;
+      background: var(--surface2); border: 2px solid transparent;
+      color: var(--text); cursor: pointer; font-size: .92rem;
+      transition: all .15s;
+    }
+    .quiz-option:hover { border-color: var(--accent); }
+    .quiz-option.correct { border-color: var(--green); background: rgba(74,222,128,.15); }
+    .quiz-option.wrong { border-color: var(--red); background: rgba(248,113,113,.12); }
+
+    .feedback {
+      padding: 12px 16px; border-radius: 8px; margin-top: 12px;
+      font-size: .9rem; display: none;
+    }
+    .feedback.show { display: block; animation: fadeIn .3s; }
+    .feedback.success { background: rgba(74,222,128,.12); border: 1px solid var(--green); color: var(--green); }
+    .feedback.error { background: rgba(248,113,113,.12); border: 1px solid var(--red); color: var(--red); }
+    .feedback.info { background: rgba(56,189,248,.10); border: 1px solid var(--accent); color: var(--accent); }
+
+    /* ---- Sliding Window Viz ---- */
+    .window-bracket {
+      position: absolute; top: -10px; left: -4px; right: -4px; height: 4px;
+      background: var(--accent2); border-radius: 2px;
+    }
+
+    .sum-display {
+      text-align: center; font-size: 1.3rem; font-weight: 700;
+      margin: 12px 0; color: var(--yellow);
+    }
+    .sum-display span { color: var(--text-dim); font-weight: 400; font-size: .9rem; }
+
+    .best-display {
+      text-align: center; font-size: 1rem; color: var(--green);
+      margin-bottom: 12px;
+    }
+
+    /* ---- Two-set viz ---- */
+    .sets-row {
+      display: flex; gap: 20px; justify-content: center; margin: 16px 0; flex-wrap: wrap;
+    }
+    .set-box {
+      flex: 1; min-width: 200px; max-width: 350px;
+      background: var(--bg); border-radius: var(--radius); padding: 16px;
+      border: 1px solid var(--surface2);
+    }
+    .set-box h4 { font-size: .85rem; color: var(--text-dim); margin-bottom: 10px; text-align: center; }
+    .set-box .set-items {
+      display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; min-height: 40px;
+    }
+    .set-item {
+      padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: .85rem;
+    }
+    .set-item.chosen { background: rgba(74,222,128,.18); color: var(--green); border: 1px solid var(--green); }
+    .set-item.rest { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
+
+    /* ---- Code block ---- */
+    .code-block {
+      background: #0d1117; border-radius: 8px; padding: 16px 20px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: .82rem;
+      line-height: 1.7; overflow-x: auto; color: #c9d1d9; margin: 12px 0;
+      border: 1px solid #21262d;
+    }
+    .code-block .kw { color: #ff7b72; }
+    .code-block .fn { color: #d2a8ff; }
+    .code-block .cm { color: #8b949e; }
+    .code-block .str { color: #a5d6ff; }
+    .code-block .num { color: #79c0ff; }
+    .code-block .blank {
+      display: inline-block; min-width: 120px; border-bottom: 2px dashed var(--accent);
+      color: var(--accent); cursor: pointer; padding: 0 4px;
+    }
+
+    /* ---- Tooltip-style hint ---- */
+    .hint-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: none; border: 1px solid var(--surface2); color: var(--text-dim);
+      padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: .8rem;
+      margin-top: 8px;
+    }
+    .hint-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .hint-text {
+      display: none; padding: 10px 14px; margin-top: 8px;
+      background: rgba(56,189,248,.08); border-radius: 8px;
+      border: 1px solid rgba(56,189,248,.2); color: var(--accent); font-size: .88rem;
+    }
+    .hint-text.show { display: block; animation: fadeIn .3s; }
+
+    /* ---- Progress Stars ---- */
+    .stars { text-align: center; margin: 10px 0; font-size: 1.5rem; }
+    .stars .star { color: var(--surface2); transition: color .3s; }
+    .stars .star.earned { color: var(--yellow); }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 640px) {
+      .topbar { padding: 12px 16px; }
+      .main { padding: 12px 12px 40px; }
+      .arr-cell { width: 42px; height: 42px; font-size: .85rem; }
+    }
+
+    /* ---- Animations ---- */
+    .pop { animation: pop .35s ease; }
+    @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+    .slide-highlight {
+      animation: slideHL 0.6s ease;
+    }
+    @keyframes slideHL {
+      0% { box-shadow: 0 0 0 0 rgba(56,189,248,.6); }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+
+    /* ---- Confetti Canvas ---- */
+    #confetti-canvas {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 9999;
+    }
+
+    /* ---- Scroll behavior ---- */
+    html { scroll-behavior: smooth; }
+
+    .explanation-box {
+      background: rgba(129,140,248,.08);
+      border: 1px solid rgba(129,140,248,.25);
+      border-radius: 8px; padding: 14px 18px; margin-top: 12px;
+      color: var(--accent2); font-size: .9rem; line-height: 1.6;
+      display: none;
+    }
+    .explanation-box.show { display: block; animation: fadeIn .3s; }
+
+    .step-counter {
+      text-align: center; font-size: .85rem; color: var(--text-dim); margin-bottom: 8px;
+    }
+
+    .controls-row {
+      display: flex; gap: 10px; justify-content: center; align-items: center;
+      margin-top: 12px; flex-wrap: wrap;
+    }
+
+    .speed-control {
+      display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--text-dim);
+    }
+    .speed-control input { width: 80px; }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <h1>🎮 DSA Quest: Minimum Cost Subarrays</h1>
+  <div class="xp-bar">
+    <span class="xp-label" id="xp-label">0 / 600 XP</span>
+    <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<!-- Level Navigation -->
+<div class="level-nav" id="level-nav"></div>
+
+<!-- Main Content -->
+<div class="main" id="main-content"></div>
+
+<script>
+// ===================================================================
+//  GAME STATE
+// ===================================================================
+const state = {
+  xp: 0,
+  maxXP: 600,
+  currentLevel: 1,
+  levelsCompleted: new Set(),
+  levelsUnlocked: new Set([1]),
+};
+
+function addXP(amount) {
+  state.xp = Math.min(state.xp + amount, state.maxXP);
+  document.getElementById('xp-fill').style.width = (state.xp / state.maxXP * 100) + '%';
+  document.getElementById('xp-label').textContent = `${state.xp} / ${state.maxXP} XP`;
+}
+
+function completeLevel(lvl) {
+  if (state.levelsCompleted.has(lvl)) return;
+  state.levelsCompleted.add(lvl);
+  if (lvl < levels.length) {
+    state.levelsUnlocked.add(lvl + 1);
+  }
+  renderLevelNav();
+  shootConfetti();
+}
+
+function goToLevel(n) {
+  if (!state.levelsUnlocked.has(n)) return;
+  state.currentLevel = n;
+  renderLevelNav();
+  renderLevel(n);
+}
+
+// ===================================================================
+//  LEVELS DEFINITION
+// ===================================================================
+const levels = [
+  { id:1, title:"The Splitter", subtitle:"Understand the problem" },
+  { id:2, title:"The Reduction", subtitle:"Spot the key insight" },
+  { id:3, title:"The Window", subtitle:"Understand the distance constraint" },
+  { id:4, title:"Sliding Minimum", subtitle:"Slide & pick the cheapest" },
+  { id:5, title:"Two-Set Trick", subtitle:"The efficient data structure" },
+  { id:6, title:"The Solution", subtitle:"Put it all together" },
+];
+
+// ===================================================================
+//  LEVEL NAV RENDERING
+// ===================================================================
+function renderLevelNav() {
+  const nav = document.getElementById('level-nav');
+  nav.innerHTML = '';
+  levels.forEach(l => {
+    const btn = document.createElement('button');
+    btn.className = 'level-btn';
+    btn.textContent = l.id;
+    if (state.levelsCompleted.has(l.id)) btn.classList.add('completed');
+    else if (l.id === state.currentLevel) btn.classList.add('active');
+    else if (state.levelsUnlocked.has(l.id)) btn.classList.add('unlocked');
+    btn.onclick = () => goToLevel(l.id);
+    nav.appendChild(btn);
+  });
+}
+
+// ===================================================================
+//  UTILITY: render array cells
+// ===================================================================
+function renderArray(arr, opts = {}) {
+  const { classes = {}, clickable = [], onClick, showIdx = true } = opts;
+  let html = '<div class="array-vis">';
+  arr.forEach((v, i) => {
+    let cls = 'arr-cell';
+    if (classes[i]) cls += ' ' + classes[i];
+    if (clickable.includes(i)) cls += ' clickable';
+    html += `<div class="${cls}" data-idx="${i}">${v}`;
+    if (showIdx) html += `<span class="idx">${i}</span>`;
+    html += `</div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+// ===================================================================
+//  LEVEL 1: THE SPLITTER
+// ===================================================================
+function renderLevel1() {
+  const nums = [1, 3, 2, 6, 4, 2];
+  const k = 3;
+  let splits = new Set(); // indices where a NEW subarray starts
+
+  const container = document.getElementById('level-1');
+  function draw() {
+    // Compute subarray coloring
+    const subColors = {};
+    let subIdx = 0;
+    for (let i = 0; i < nums.length; i++) {
+      if (splits.has(i)) subIdx++;
+      subColors[i] = 'sub' + (subIdx % 5);
+    }
+    // cost
+    const splitArr = [0, ...Array.from(splits).sort((a,b)=>a-b)];
+    const cost = splitArr.reduce((s, idx) => s + nums[idx], 0);
+    const numSubs = splitArr.length;
+
+    let html = `
+      <div class="card">
+        <h3>📝 Your Task</h3>
+        <p>Click on cells to place <strong>${k - 1} dividers</strong> and split the array into <strong>${k} contiguous subarrays</strong>.</p>
+        <p style="margin-top:6px">The <strong>cost</strong> of each subarray is its <em>first element</em>. Your goal: <strong>minimize the total cost</strong>.</p>
+      </div>
+      <div class="card">
+        <h3>Array: [${nums.join(', ')}] &nbsp; k = ${k}</h3>
+        <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:8px">Click a cell (index 1-${nums.length-1}) to toggle a split point before it</p>
+        ${renderArray(nums, { classes: subColors, clickable: [1,2,3,4,5] })}
+        <div style="margin-top:28px;text-align:center;">
+          <div class="sum-display">Total Cost = ${cost} <span>(sum of first elements of each subarray)</span></div>
+          <div style="font-size:.85rem;color:var(--text-dim)">Subarrays: ${numSubs} / ${k}</div>
+        </div>
+        <div id="l1-feedback" class="feedback" style="margin-top:12px"></div>
+        <div class="btn-row">
+          <button class="btn btn-secondary btn-sm" onclick="splits1.clear();renderLevel1Draw()">Reset</button>
+          <button class="btn btn-primary" onclick="checkLevel1()" ${numSubs !== k ? 'disabled' : ''}>Check Answer ✓</button>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+
+    // attach click
+    container.querySelectorAll('.arr-cell.clickable').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const idx = parseInt(cell.dataset.idx);
+        if (splits.has(idx)) splits.delete(idx);
+        else if (splits.size < k - 1) splits.add(idx);
+        draw();
+      });
+    });
+  }
+
+  // expose for reset
+  window.splits1 = splits;
+  window.renderLevel1Draw = draw;
+
+  window.checkLevel1 = function() {
+    const splitArr = [0, ...Array.from(splits).sort((a,b)=>a-b)];
+    const cost = splitArr.reduce((s, idx) => s + nums[idx], 0);
+    const fb = document.getElementById('l1-feedback');
+    if (cost === 5) {
+      fb.className = 'feedback show success';
+      fb.textContent = '🎉 Perfect! Cost = 5 is the minimum! The first subarray always starts at index 0 (cost = 1), and you picked indices 2 and 5 (cost = 2 + 2).';
+      addXP(100);
+      completeLevel(1);
+    } else if (cost <= 7) {
+      fb.className = 'feedback show info';
+      fb.textContent = `Cost = ${cost}. Good attempt! But can you do better? Hint: try to make the split points land on smaller numbers.`;
+    } else {
+      fb.className = 'feedback show error';
+      fb.textContent = `Cost = ${cost}. That's a bit high. Remember: you want the FIRST elements of each subarray to be as small as possible.`;
+    }
+  };
+
+  draw();
+}
+
+// ===================================================================
+//  LEVEL 2: THE REDUCTION
+// ===================================================================
+function renderLevel2() {
+  const container = document.getElementById('level-2');
+  let quizAnswered = [false, false];
+  let quizCorrect = [false, false];
+
+  function draw() {
+    container.innerHTML = `
+      <div class="card">
+        <h3>🔍 Observation Time</h3>
+        <p>In Level 1, you split <code>[1, 3, 2, 6, 4, 2]</code> into 3 subarrays. The cost was the sum of the
+        <strong>first element</strong> of each subarray.</p>
+        <p style="margin-top:8px">Notice: the first subarray <em>always</em> starts at index 0. So <code>nums[0]</code> is <em>always</em> part of the cost, no matter what.</p>
+        <p style="margin-top:8px;color:var(--accent)"><strong>Total cost = nums[0] + nums[i₁] + nums[i₂] + ... + nums[iₖ₋₁]</strong></p>
+        <p style="margin-top:8px">where i₁, i₂, ..., iₖ₋₁ are the starting indices of subarrays 2 through k.</p>
+      </div>
+
+      <div class="card">
+        <h3>❓ Quiz 1: What's fixed?</h3>
+        <p>When dividing into k subarrays, which part of the cost can you NOT change?</p>
+        <button class="quiz-option" data-q="0" data-a="0" onclick="answerQuiz2(0,0)">A) The last element nums[n-1]</button>
+        <button class="quiz-option" data-q="0" data-a="1" onclick="answerQuiz2(0,1)">B) The first element nums[0]</button>
+        <button class="quiz-option" data-q="0" data-a="2" onclick="answerQuiz2(0,2)">C) The maximum element</button>
+        <div id="l2-fb0" class="feedback"></div>
+      </div>
+
+      <div class="card">
+        <h3>❓ Quiz 2: The real problem</h3>
+        <p>Since nums[0] is fixed, the problem reduces to:</p>
+        <button class="quiz-option" data-q="1" data-a="0" onclick="answerQuiz2(1,0)">A) Sort the entire array and pick the smallest k elements</button>
+        <button class="quiz-option" data-q="1" data-a="1" onclick="answerQuiz2(1,1)">B) Pick k−1 indices (from 1..n−1) to be split points, minimizing the sum of nums at those indices</button>
+        <button class="quiz-option" data-q="1" data-a="2" onclick="answerQuiz2(1,2)">C) Find the minimum element and multiply by k</button>
+        <div id="l2-fb1" class="feedback"></div>
+      </div>
+
+      <div id="l2-next" style="text-align:center;margin-top:16px;display:none">
+        <p style="color:var(--green);margin-bottom:10px;font-weight:600">✅ Key Insight Unlocked!</p>
+        <div class="card" style="text-align:left">
+          <p><strong>The problem reduces to:</strong> Choose k−1 indices from positions 1 to n−1 to act as split points.
+          Minimize the sum of <code>nums[splitPoint]</code> for each chosen split point. But there's a constraint on which indices you can pick (the <code>dist</code> constraint). Let's explore that next!</p>
+        </div>
+        <button class="btn btn-success" onclick="goToLevel(3)">Continue to Level 3 →</button>
+      </div>
+    `;
+  }
+
+  window.answerQuiz2 = function(q, a) {
+    if (quizAnswered[q]) return;
+    const correct = (q === 0 && a === 1) || (q === 1 && a === 1);
+    quizAnswered[q] = true;
+    quizCorrect[q] = correct;
+
+    // Style buttons
+    container.querySelectorAll(`.quiz-option[data-q="${q}"]`).forEach(btn => {
+      const ba = parseInt(btn.dataset.a);
+      if ((q === 0 && ba === 1) || (q === 1 && ba === 1)) btn.classList.add('correct');
+      else if (ba === a && !correct) btn.classList.add('wrong');
+      btn.style.pointerEvents = 'none';
+    });
+
+    const fb = document.getElementById(`l2-fb${q}`);
+    if (correct) {
+      fb.className = 'feedback show success';
+      fb.textContent = q === 0
+        ? '✅ Correct! The first subarray always starts at 0, so nums[0] is always included.'
+        : '✅ Exactly! We need to choose k−1 split points from indices 1..n−1 to minimize their sum (plus nums[0]).';
+      addXP(50);
+    } else {
+      fb.className = 'feedback show error';
+      fb.textContent = q === 0
+        ? '❌ Not quite. Think about which subarray is always forced to exist.'
+        : '❌ Not quite. Remember, the subarrays must be contiguous, and we\'re choosing where to split.';
+    }
+
+    if (quizAnswered[0] && quizAnswered[1] && quizCorrect[0] && quizCorrect[1]) {
+      document.getElementById('l2-next').style.display = 'block';
+      completeLevel(2);
+    }
+  };
+
+  draw();
+}
+
+// ===================================================================
+//  LEVEL 3: THE WINDOW (dist constraint)
+// ===================================================================
+function renderLevel3() {
+  const container = document.getElementById('level-3');
+  const nums = [1, 3, 2, 6, 4, 2];
+  const k = 3;
+  const dist = 3;
+  let selectedIndices = new Set();
+  let quizDone = false;
+
+  function draw() {
+    const sortedSel = Array.from(selectedIndices).sort((a,b)=>a-b);
+    let valid = null;
+    let distVal = null;
+    if (sortedSel.length === k - 1) {
+      distVal = sortedSel[sortedSel.length - 1] - sortedSel[0];
+      valid = distVal <= dist;
+    }
+
+    const classes = {};
+    nums.forEach((_, i) => {
+      if (i === 0) classes[i] = 'sub0';
+      else if (selectedIndices.has(i)) classes[i] = valid === true ? 'highlight' : valid === false ? 'split' : 'selected';
+    });
+
+    // Show the valid window range
+    let windowHtml = '';
+    if (sortedSel.length >= 1) {
+      const first = sortedSel[0];
+      windowHtml = `<p style="margin-top:8px;font-size:.88rem">First split = index ${first}, so last split must be ≤ index ${first} + ${dist} = ${first + dist}</p>`;
+    }
+
+    container.innerHTML = `
+      <div class="card">
+        <h3>📏 The Distance Constraint</h3>
+        <p>You've learned that we pick k−1 split points. But there's a catch:</p>
+        <p style="margin-top:8px;color:var(--accent);font-weight:600">
+          The last split point minus the first split point must be ≤ dist.
+        </p>
+        <p style="margin-top:8px">In other words: <strong>i<sub>k−1</sub> − i<sub>1</sub> ≤ dist</strong></p>
+        <p style="margin-top:8px;color:var(--text-dim)">All k−1 split points must fit within a window of size <strong>dist + 1</strong> consecutive positions.</p>
+      </div>
+
+      <div class="card">
+        <h3>🧪 Experiment: [${nums.join(', ')}], k=${k}, dist=${dist}</h3>
+        <p style="font-size:.85rem;color:var(--text-dim)">Click to select exactly ${k-1} split points from indices 1-${nums.length-1}. See if they satisfy i<sub>k-1</sub> − i<sub>1</sub> ≤ ${dist}.</p>
+        ${renderArray(nums, { classes, clickable: [1,2,3,4,5] })}
+        <div style="text-align:center;margin-top:24px;">
+          ${sortedSel.length === k - 1
+            ? `<div style="font-size:1.1rem;font-weight:700;color:${valid ? 'var(--green)' : 'var(--red)'}">
+                i<sub>k-1</sub> − i<sub>1</sub> = ${sortedSel[sortedSel.length-1]} − ${sortedSel[0]} = ${distVal} ${valid ? '≤' : '>'} ${dist}  →  ${valid ? '✅ VALID' : '❌ INVALID'}
+              </div>`
+            : `<div style="color:var(--text-dim)">Selected ${sortedSel.length} / ${k - 1} split points</div>`
+          }
+          ${windowHtml}
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary btn-sm" onclick="level3sel.clear();renderLevel3Draw()">Reset</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>❓ What does this constraint mean geometrically?</h3>
+        <p>If you must pick k−1 split points such that the last minus the first ≤ dist, that means...</p>
+        <button class="quiz-option" onclick="answerLevel3Quiz(0)" id="l3q0">A) The split points can be anywhere in the array</button>
+        <button class="quiz-option" onclick="answerLevel3Quiz(1)" id="l3q1">B) All k−1 split points must lie inside some window of dist+1 consecutive indices</button>
+        <button class="quiz-option" onclick="answerLevel3Quiz(2)" id="l3q2">C) The split points must be exactly dist apart</button>
+        <div id="l3-fb" class="feedback"></div>
+      </div>
+
+      <div id="l3-next" style="text-align:center;margin-top:16px;display:${quizDone ? 'block' : 'none'}">
+        <div class="card" style="text-align:left">
+          <h3 style="color:var(--green)">🧠 The Window Insight</h3>
+          <p>The k−1 split points must all fit inside a <strong>sliding window</strong> of size <code>dist + 1</code>.</p>
+          <p style="margin-top:8px">So the algorithm becomes: slide a window of size dist+1 across indices 1..n−1, and in each window position, pick the <strong>k−1 smallest values</strong>. Track the minimum sum!</p>
+        </div>
+        <button class="btn btn-success" onclick="goToLevel(4)">Continue to Level 4 →</button>
+      </div>
+    `;
+
+    // clicks
+    container.querySelectorAll('.arr-cell.clickable').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const idx = parseInt(cell.dataset.idx);
+        if (selectedIndices.has(idx)) selectedIndices.delete(idx);
+        else if (selectedIndices.size < k - 1) selectedIndices.add(idx);
+        draw();
+      });
+    });
+  }
+
+  window.level3sel = selectedIndices;
+  window.renderLevel3Draw = draw;
+
+  window.answerLevel3Quiz = function(a) {
+    if (quizDone) return;
+    const fb = document.getElementById('l3-fb');
+    if (a === 1) {
+      quizDone = true;
+      document.getElementById('l3q1').classList.add('correct');
+      fb.className = 'feedback show success';
+      fb.textContent = '✅ Exactly! All k−1 points must fit in a sliding window of width dist+1. This is the crucial insight!';
+      addXP(100);
+      completeLevel(3);
+      document.getElementById('l3-next').style.display = 'block';
+    } else {
+      document.getElementById(`l3q${a}`).classList.add('wrong');
+      fb.className = 'feedback show error';
+      fb.textContent = '❌ Not quite. Think about what "last - first ≤ dist" means for a set of indices.';
+    }
+    ['l3q0','l3q1','l3q2'].forEach(id => document.getElementById(id).style.pointerEvents = 'none');
+  };
+
+  draw();
+}
+
+// ===================================================================
+//  LEVEL 4: SLIDING WINDOW SIMULATION
+// ===================================================================
+function renderLevel4() {
+  const container = document.getElementById('level-4');
+  const nums = [10, 1, 2, 2, 2, 1];
+  const k = 4;
+  const dist = 3;
+  const windowSize = dist + 1; // 4
+  // valid windows: indices 1..5, window size 4
+  // windows: [1,2,3,4], [2,3,4,5]
+  // In each window, pick k-1=3 smallest
+
+  let windowStart = 1;
+  const maxStart = nums.length - windowSize; // 5 - 4 + 1 = 2
+  let bestSum = Infinity;
+  let bestStart = -1;
+  let history = [];
+  let animating = false;
+
+  function getWindowSmallest(start) {
+    const windowVals = [];
+    for (let i = start; i < start + windowSize && i < nums.length; i++) {
+      windowVals.push({ val: nums[i], idx: i });
+    }
+    windowVals.sort((a, b) => a.val - b.val);
+    return windowVals.slice(0, k - 1);
+  }
+
+  function draw() {
+    const chosen = getWindowSmallest(windowStart);
+    const chosenIndices = new Set(chosen.map(c => c.idx));
+    const windowSum = chosen.reduce((s, c) => s + c.val, 0) + nums[0];
+
+    if (windowSum < bestSum) {
+      bestSum = windowSum;
+      bestStart = windowStart;
+    }
+
+    const classes = {};
+    for (let i = 0; i < nums.length; i++) {
+      if (i === 0) classes[i] = 'sub0';
+      else if (i >= windowStart && i < windowStart + windowSize) {
+        classes[i] = chosenIndices.has(i) ? 'highlight' : 'window';
+      } else {
+        classes[i] = 'fade';
+      }
+    }
+
+    container.innerHTML = `
+      <div class="card">
+        <h3>🔄 Sliding Window in Action</h3>
+        <p>Array: [${nums.join(', ')}], k=${k}, dist=${dist}</p>
+        <p style="margin-top:6px;color:var(--text-dim)">Window size = dist+1 = ${windowSize}. We need to pick k−1 = ${k-1} smallest values in each window.</p>
+        <p style="margin-top:6px;color:var(--text-dim)">The window slides across indices 1 to ${nums.length - 1}.</p>
+      </div>
+
+      <div class="card">
+        <div class="step-counter">Window Position: ${windowStart} to ${windowStart + windowSize - 1} &nbsp;|&nbsp; Step ${windowStart} of ${maxStart}</div>
+        ${renderArray(nums, { classes })}
+        <div style="margin-top:24px;text-align:center">
+          <div style="font-size:.82rem;color:var(--text-dim);margin-bottom:4px">
+            <span style="display:inline-block;width:12px;height:12px;background:rgba(129,140,248,.3);border:1px solid var(--accent2);border-radius:3px;vertical-align:middle"></span> In window &nbsp;
+            <span style="display:inline-block;width:12px;height:12px;background:rgba(74,222,128,.2);border:1px solid var(--green);border-radius:3px;vertical-align:middle"></span> Chosen (k−1 smallest) &nbsp;
+            <span style="display:inline-block;width:12px;height:12px;background:rgba(56,189,248,.2);border:1px solid var(--accent);border-radius:3px;vertical-align:middle"></span> nums[0] (always included)
+          </div>
+          <div class="sum-display">
+            Window Cost = nums[0] + ${chosen.map(c=>'nums['+c.idx+']').join(' + ')} = ${nums[0]} + ${chosen.map(c=>c.val).join(' + ')} = ${windowSum}
+          </div>
+          <div class="best-display">Best so far: ${bestSum} ${bestStart >= 0 ? '(window starting at ' + bestStart + ')' : ''}</div>
+        </div>
+        <div class="controls-row">
+          <button class="btn btn-secondary btn-sm" onclick="level4Prev()" ${windowStart <= 1 ? 'disabled' : ''}>← Previous</button>
+          <button class="btn btn-primary btn-sm" onclick="level4Next()" ${windowStart >= maxStart ? 'disabled' : ''}>Next →</button>
+          <button class="btn btn-secondary btn-sm" onclick="level4Auto()">▶ Auto-play</button>
+          <button class="btn btn-secondary btn-sm" onclick="level4Reset()">↺ Reset</button>
+        </div>
+      </div>
+
+      ${windowStart >= maxStart ? `
+      <div class="card" style="border-color:var(--green)">
+        <h3 style="color:var(--green)">🎯 Result</h3>
+        <p>After sliding through all valid window positions, the minimum cost is <strong>${bestSum}</strong>.</p>
+        <p style="margin-top:8px;color:var(--text-dim)">But wait — recomputing the k−1 smallest in each window from scratch is O(window_size × log) per step. For large arrays, we need something smarter. That's Level 5!</p>
+      </div>
+      <div class="card">
+        <h3>❓ Time complexity question</h3>
+        <p>If we recompute the k−1 smallest for every window position naively, what's the complexity?</p>
+        <button class="quiz-option" onclick="answerLevel4Quiz(0)">A) O(n)</button>
+        <button class="quiz-option" onclick="answerLevel4Quiz(1)">B) O(n × dist × log(dist))</button>
+        <button class="quiz-option" onclick="answerLevel4Quiz(2)">C) O(n log n)</button>
+        <div id="l4-fb" class="feedback"></div>
+      </div>
+      ` : ''}
+    `;
+  }
+
+  window.level4Prev = function () {
+    if (windowStart > 1) { windowStart--; bestSum = Infinity; bestStart = -1; draw(); }
+  };
+  window.level4Next = function () {
+    if (windowStart < maxStart) { windowStart++; draw(); }
+  };
+  window.level4Auto = async function () {
+    if (animating) return;
+    animating = true;
+    windowStart = 1; bestSum = Infinity; bestStart = -1;
+    draw();
+    for (let i = 1; i < maxStart; i++) {
+      await new Promise(r => setTimeout(r, 1200));
+      if (!animating) return;
+      windowStart++;
+      draw();
+    }
+    animating = false;
+  };
+  window.level4Reset = function () {
+    animating = false;
+    windowStart = 1; bestSum = Infinity; bestStart = -1;
+    draw();
+  };
+
+  window.answerLevel4Quiz = function(a) {
+    const fb = document.getElementById('l4-fb');
+    container.querySelectorAll('.quiz-option').forEach(b => b.style.pointerEvents = 'none');
+    if (a === 1) {
+      container.querySelectorAll('.quiz-option')[1].classList.add('correct');
+      fb.className = 'feedback show success';
+      fb.textContent = '✅ Correct! Sorting each window is O(dist log dist), and we do it for O(n) window positions. We need to bring this down to O(n log n) total.';
+      addXP(100);
+      completeLevel(4);
+    } else {
+      container.querySelectorAll('.quiz-option')[a].classList.add('wrong');
+      container.querySelectorAll('.quiz-option')[1].classList.add('correct');
+      fb.className = 'feedback show error';
+      fb.textContent = '❌ The answer is O(n × dist × log(dist)). Each window has up to dist+1 elements to sort, and there are O(n) windows.';
+      addXP(20);
+      completeLevel(4);
+    }
+    fb.innerHTML += '<div style="margin-top:12px"><button class="btn btn-success" onclick="goToLevel(5)">Continue to Level 5 →</button></div>';
+  };
+
+  draw();
+}
+
+// ===================================================================
+//  LEVEL 5: TWO-SET TRICK
+// ===================================================================
+function renderLevel5() {
+  const container = document.getElementById('level-5');
+  const nums = [10, 1, 2, 2, 2, 1];
+  const k = 4;
+  const dist = 3;
+  const windowSize = dist + 1;
+
+  let step = 0;
+  // Steps:
+  // 0: initial window [1..4] → values [1,2,2,2], chosen = smallest 3: {1,2,2}, rest = {2}
+  // 1: slide right: remove index 1 (val 1), add index 5 (val 1)
+  //    new window [2..5] → values [2,2,2,1]
+  //    chosen = {1,2,2}, rest = {2}
+
+  const steps = [
+    {
+      title: 'Step 1: Initialize',
+      desc: 'Window covers indices 1-4. We maintain two sorted sets: "Chosen" holds the k−1=3 smallest values, "Rest" holds the remaining values in the window.',
+      windowRange: [1, 4],
+      chosen: [1, 2, 2],
+      rest: [2],
+      chosenSum: 5,
+      action: null,
+      highlight: 'We insert all window elements: 1, 2, 2, 2. The 3 smallest (1, 2, 2) go into Chosen. The remainder (2) goes into Rest.'
+    },
+    {
+      title: 'Step 2: Slide Right',
+      desc: 'Window moves to indices 2-5. We remove the element leaving (index 1, value 1) and add the element entering (index 5, value 1).',
+      windowRange: [2, 5],
+      chosen: [1, 2, 2],
+      rest: [2],
+      chosenSum: 5,
+      action: 'remove 1 (was in Chosen), add 1 (goes to Chosen since ≤ max of Chosen). But now Chosen has 3 items and Rest needs to stay balanced.',
+      highlight: 'Remove: value 1 was in Chosen → remove it, chosenSum drops. Add: value 1 ≤ max(Chosen)=2, so insert into Chosen. Now |Chosen|=3 ✓. chosenSum = 1+2+2 = 5.',
+      removing: { val: 1, from: 'chosen' },
+      adding: { val: 1, to: 'chosen' },
+    },
+    {
+      title: 'Step 3: Result',
+      desc: 'We\'ve checked all window positions. The minimum chosenSum was 5, so the answer is nums[0] + 5 = 10 + 5 = 15.',
+      windowRange: [2, 5],
+      chosen: [1, 2, 2],
+      rest: [2],
+      chosenSum: 5,
+      action: null,
+      highlight: 'The two-set technique lets us maintain the k−1 smallest elements as the window slides, with O(log n) per add/remove operation. Total: O(n log n)!'
+    },
+  ];
+
+  function draw() {
+    const s = steps[step];
+    const classes = {};
+    for (let i = 0; i < nums.length; i++) {
+      if (i === 0) classes[i] = 'sub0';
+      else if (i >= s.windowRange[0] && i <= s.windowRange[1]) classes[i] = 'window';
+      else classes[i] = 'fade';
+    }
+
+    container.innerHTML = `
+      <div class="card">
+        <h3>⚡ The Two-Set Trick</h3>
+        <p>Instead of recomputing k−1 smallest each time, we maintain two sorted multisets:</p>
+        <ul>
+          <li><strong style="color:var(--green)">Chosen</strong>: always holds exactly k−1 = ${k-1} smallest values in the current window</li>
+          <li><strong style="color:var(--red)">Rest</strong>: holds anything else in the window</li>
+        </ul>
+        <p style="margin-top:8px">Invariant: <strong>max(Chosen) ≤ min(Rest)</strong></p>
+        <p style="margin-top:4px;color:var(--text-dim)">When an element enters/leaves the window, we update the sets and rebalance to maintain this invariant in O(log n).</p>
+      </div>
+
+      <div class="card">
+        <h3>${s.title}</h3>
+        <p>${s.desc}</p>
+        <div class="step-counter">Step ${step + 1} / ${steps.length}</div>
+        ${renderArray(nums, { classes })}
+
+        <div class="sets-row">
+          <div class="set-box">
+            <h4>✅ Chosen (k−1 = ${k-1} smallest)</h4>
+            <div class="set-items">
+              ${s.chosen.map(v => `<span class="set-item chosen">${v}</span>`).join('')}
+            </div>
+            <div style="text-align:center;margin-top:8px;font-size:.85rem;color:var(--green)">
+              Sum = ${s.chosenSum}
+            </div>
+          </div>
+          <div class="set-box">
+            <h4>📦 Rest</h4>
+            <div class="set-items">
+              ${s.rest.map(v => `<span class="set-item rest">${v}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="explanation-box show" style="margin-top:12px">
+          ${s.highlight}
+        </div>
+
+        <div class="controls-row">
+          <button class="btn btn-secondary btn-sm" onclick="level5Prev()" ${step === 0 ? 'disabled' : ''}>← Previous</button>
+          <button class="btn btn-primary btn-sm" onclick="level5Next()" ${step >= steps.length - 1 ? 'disabled' : ''}>Next →</button>
+        </div>
+      </div>
+
+      ${step === steps.length - 1 ? `
+      <div class="card" style="border-color:var(--green)">
+        <h3 style="color:var(--green)">🧠 The Add/Remove Logic</h3>
+        <div style="margin-top:8px">
+          <p><strong>When ADDING a value v to the window:</strong></p>
+          <ol style="padding-left:20px;margin-top:4px;color:var(--text-dim)">
+            <li>If v ≤ max(Chosen): insert into Chosen, chosenSum += v</li>
+            <li>Else: insert into Rest</li>
+            <li>Rebalance: if |Chosen| > k−1, move max(Chosen) → Rest</li>
+            <li>Rebalance: if |Chosen| < k−1, move min(Rest) → Chosen</li>
+          </ol>
+          <p style="margin-top:12px"><strong>When REMOVING a value v from the window:</strong></p>
+          <ol style="padding-left:20px;margin-top:4px;color:var(--text-dim)">
+            <li>If v is in Chosen: remove from Chosen, chosenSum -= v</li>
+            <li>Else: remove from Rest</li>
+            <li>Rebalance: if |Chosen| < k−1, move min(Rest) → Chosen</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>❓ Final Understanding Check</h3>
+        <p>When we add a new element to the window and it's smaller than max(Chosen), what happens?</p>
+        <button class="quiz-option" onclick="answerLevel5Quiz(0)">A) It goes to Rest because Chosen is full</button>
+        <button class="quiz-option" onclick="answerLevel5Quiz(1)">B) It goes to Chosen, and then max(Chosen) gets moved to Rest to maintain |Chosen| = k−1</button>
+        <button class="quiz-option" onclick="answerLevel5Quiz(2)">C) We rebuild both sets from scratch</button>
+        <div id="l5-fb" class="feedback"></div>
+      </div>
+      ` : ''}
+    `;
+  }
+
+  window.level5Prev = function () { if (step > 0) { step--; draw(); } };
+  window.level5Next = function () { if (step < steps.length - 1) { step++; draw(); } };
+
+  window.answerLevel5Quiz = function(a) {
+    const fb = document.getElementById('l5-fb');
+    container.querySelectorAll('.quiz-option').forEach(b => b.style.pointerEvents = 'none');
+    if (a === 1) {
+      container.querySelectorAll('.quiz-option')[1].classList.add('correct');
+      fb.className = 'feedback show success';
+      fb.textContent = '✅ Exactly! The new small element enters Chosen, pushing out the current max. This maintains the invariant and keeps chosenSum as small as possible.';
+      addXP(100);
+      completeLevel(5);
+    } else {
+      container.querySelectorAll('.quiz-option')[a].classList.add('wrong');
+      container.querySelectorAll('.quiz-option')[1].classList.add('correct');
+      fb.className = 'feedback show error';
+      fb.textContent = '❌ The correct answer is B. The element goes into Chosen (it\'s small enough), and the largest in Chosen is evicted to Rest.';
+      addXP(30);
+      completeLevel(5);
+    }
+    fb.innerHTML += '<div style="margin-top:12px"><button class="btn btn-success" onclick="goToLevel(6)">Continue to Level 6 →</button></div>';
+  };
+
+  draw();
+}
+
+// ===================================================================
+//  LEVEL 6: FULL SOLUTION + INTERACTIVE SANDBOX
+// ===================================================================
+function renderLevel6() {
+  const container = document.getElementById('level-6');
+
+  let sandboxNums = [1, 3, 2, 6, 4, 2];
+  let sandboxK = 3;
+  let sandboxDist = 3;
+  let simStep = -1;
+  let simSteps = [];
+
+  function computeSteps(nums, k, dist) {
+    const n = nums.length;
+    const needed = k - 1; // number of split points to pick
+    const windowSize = dist + 1;
+    const steps = [];
+
+    // We'll use a simple sorted array approach for the simulation
+    // "chosen" holds the needed smallest, "rest" holds the others
+    let chosen = []; // sorted
+    let rest = [];   // sorted
+    let chosenSum = 0;
+    let bestSum = Infinity;
+
+    function insertSorted(arr, val) {
+      let lo = 0, hi = arr.length;
+      while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid] < val) lo = mid + 1; else hi = mid; }
+      arr.splice(lo, 0, val);
+    }
+    function removeSorted(arr, val) {
+      const idx = arr.indexOf(val);
+      if (idx >= 0) arr.splice(idx, 1);
+    }
+
+    function rebalance() {
+      while (chosen.length > needed) {
+        const v = chosen.pop(); // max of chosen
+        chosenSum -= v;
+        insertSorted(rest, v);
+      }
+      while (chosen.length < needed && rest.length > 0) {
+        const v = rest.shift(); // min of rest
+        chosenSum += v;
+        insertSorted(chosen, v);
+      }
+      // swap if needed
+      while (chosen.length > 0 && rest.length > 0 && chosen[chosen.length - 1] > rest[0]) {
+        const fromChosen = chosen.pop();
+        chosenSum -= fromChosen;
+        const fromRest = rest.shift();
+        chosenSum += fromRest;
+        insertSorted(rest, fromChosen);
+        insertSorted(chosen, fromRest);
+      }
+    }
+
+    // Initialize: add elements at indices 1..windowSize (or 1..n-1 if smaller)
+    const initEnd = Math.min(windowSize, n - 1);
+    for (let i = 1; i <= initEnd; i++) {
+      insertSorted(chosen, nums[i]);
+      chosenSum += nums[i];
+    }
+    rebalance();
+
+    bestSum = chosenSum + nums[0];
+    steps.push({
+      type: 'init',
+      windowRange: [1, initEnd],
+      chosen: [...chosen],
+      rest: [...rest],
+      chosenSum,
+      totalCost: chosenSum + nums[0],
+      bestSum,
+      desc: `Initialize window [1..${initEnd}]. Insert all values, pick ${needed} smallest.`
+    });
+
+    // Slide
+    for (let right = initEnd + 1; right < n; right++) {
+      const left = right - windowSize; // element to remove is at index left+1... wait
+      // window should cover [right - windowSize + 1 .. right]
+      const newLeft = right - windowSize + 1;
+      const removeIdx = newLeft - 1;
+
+      // Add new element
+      const addVal = nums[right];
+      if (chosen.length > 0 && addVal <= chosen[chosen.length - 1]) {
+        insertSorted(chosen, addVal);
+        chosenSum += addVal;
+      } else {
+        insertSorted(rest, addVal);
+      }
+
+      // Remove old element
+      const removeVal = nums[removeIdx];
+      if (chosen.includes(removeVal)) {
+        removeSorted(chosen, removeVal);
+        chosenSum -= removeVal;
+      } else {
+        removeSorted(rest, removeVal);
+      }
+
+      rebalance();
+
+      const totalCost = chosenSum + nums[0];
+      if (totalCost < bestSum) bestSum = totalCost;
+
+      steps.push({
+        type: 'slide',
+        windowRange: [newLeft, right],
+        removed: { idx: removeIdx, val: removeVal },
+        added: { idx: right, val: addVal },
+        chosen: [...chosen],
+        rest: [...rest],
+        chosenSum,
+        totalCost,
+        bestSum,
+        desc: `Slide: remove nums[${removeIdx}]=${removeVal}, add nums[${right}]=${addVal}. Window [${newLeft}..${right}].`
+      });
+    }
+
+    return steps;
+  }
+
+  function drawSandbox() {
+    simSteps = computeSteps(sandboxNums, sandboxK, sandboxDist);
+    const finalBest = simSteps.length > 0 ? simSteps[simSteps.length - 1].bestSum : 'N/A';
+
+    const curStep = simStep >= 0 && simStep < simSteps.length ? simSteps[simStep] : null;
+
+    // Array classes
+    const classes = {};
+    if (curStep) {
+      const [wl, wr] = curStep.windowRange;
+      const chosenSet = new Set();
+      const chosenCopy = [...curStep.chosen];
+      for (let i = wl; i <= wr; i++) {
+        const vi = chosenCopy.indexOf(sandboxNums[i]);
+        if (vi >= 0) {
+          chosenSet.add(i);
+          chosenCopy.splice(vi, 1);
+        }
+      }
+      for (let i = 0; i < sandboxNums.length; i++) {
+        if (i === 0) classes[i] = 'sub0';
+        else if (i >= wl && i <= wr) {
+          classes[i] = chosenSet.has(i) ? 'highlight' : 'window';
+        } else {
+          classes[i] = 'fade';
+        }
+      }
+    } else {
+      for (let i = 0; i < sandboxNums.length; i++) {
+        classes[i] = i === 0 ? 'sub0' : '';
+      }
+    }
+
+    container.innerHTML = `
+      <div class="card">
+        <h3>🏆 The Complete Algorithm</h3>
+        <div style="margin-top:8px">
+          <p>Here's the plan we derived step by step:</p>
+          <ol style="padding-left:20px;margin-top:8px;color:var(--text-dim);line-height:1.8">
+            <li><strong>nums[0]</strong> is always part of the cost (the first subarray always starts at 0).</li>
+            <li>We need k−1 more split points from indices 1..n−1.</li>
+            <li>The constraint i<sub>k−1</sub> − i<sub>1</sub> ≤ dist means all split points fit in a window of size dist+1.</li>
+            <li>Slide a window of size dist+1 across indices 1..n−1.</li>
+            <li>Maintain two sorted sets (<strong>Chosen</strong> and <strong>Rest</strong>) for O(log n) updates.</li>
+            <li>Track minimum <code>nums[0] + chosenSum</code> across all window positions.</li>
+          </ol>
+          <p style="margin-top:8px;color:var(--green);font-weight:600">Time: O(n log n) &nbsp;|&nbsp; Space: O(n)</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>💻 Solution Code (Python)</h3>
+        <div class="code-block"><span class="kw">from</span> sortedcontainers <span class="kw">import</span> SortedList
+
+<span class="kw">class</span> <span class="fn">Solution</span>:
+    <span class="kw">def</span> <span class="fn">minimumCost</span>(self, nums, k, dist):
+        n = <span class="fn">len</span>(nums)
+        needed = k - 1          <span class="cm"># split points to pick</span>
+        window = dist + 1       <span class="cm"># max window size</span>
+
+        <span class="cm"># Two SortedLists: chosen (k-1 smallest), rest</span>
+        chosen = SortedList()
+        rest = SortedList()
+        chosen_sum = <span class="num">0</span>
+
+        <span class="cm"># Initialize with first window [1 .. window]</span>
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="fn">min</span>(window + <span class="num">1</span>, n)):
+            chosen.add(nums[i])
+            chosen_sum += nums[i]
+
+        <span class="cm"># Rebalance: keep only 'needed' in chosen</span>
+        <span class="kw">while</span> <span class="fn">len</span>(chosen) > needed:
+            v = chosen.pop()     <span class="cm"># remove max</span>
+            chosen_sum -= v
+            rest.add(v)
+
+        best = chosen_sum + nums[<span class="num">0</span>]
+
+        <span class="cm"># Slide the window</span>
+        <span class="kw">for</span> right <span class="kw">in</span> <span class="fn">range</span>(window + <span class="num">1</span>, n):
+            <span class="cm"># Add nums[right]</span>
+            <span class="kw">if</span> chosen <span class="kw">and</span> nums[right] <= chosen[-<span class="num">1</span>]:
+                chosen.add(nums[right])
+                chosen_sum += nums[right]
+            <span class="kw">else</span>:
+                rest.add(nums[right])
+
+            <span class="cm"># Remove nums[right - window]</span>
+            remove_val = nums[right - window]
+            <span class="kw">if</span> remove_val <span class="kw">in</span> chosen:
+                chosen.remove(remove_val)
+                chosen_sum -= remove_val
+            <span class="kw">else</span>:
+                rest.remove(remove_val)
+
+            <span class="cm"># Rebalance</span>
+            <span class="kw">while</span> <span class="fn">len</span>(chosen) < needed <span class="kw">and</span> rest:
+                v = rest.pop(<span class="num">0</span>)
+                chosen.add(v)
+                chosen_sum += v
+            <span class="kw">while</span> <span class="fn">len</span>(chosen) > needed:
+                v = chosen.pop()
+                chosen_sum -= v
+                rest.add(v)
+            <span class="cm"># Fix invariant</span>
+            <span class="kw">while</span> chosen <span class="kw">and</span> rest <span class="kw">and</span> chosen[-<span class="num">1</span>] > rest[<span class="num">0</span>]:
+                big = chosen.pop()
+                chosen_sum -= big
+                small = rest.pop(<span class="num">0</span>)
+                chosen_sum += small
+                chosen.add(small)
+                rest.add(big)
+
+            best = <span class="fn">min</span>(best, chosen_sum + nums[<span class="num">0</span>])
+
+        <span class="kw">return</span> best</div>
+      </div>
+
+      <div class="card">
+        <h3>🎮 Interactive Sandbox</h3>
+        <p style="font-size:.85rem;color:var(--text-dim)">Customize the input and step through the algorithm!</p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;align-items:end">
+          <div>
+            <label style="font-size:.8rem;color:var(--text-dim)">nums (comma-separated)</label><br>
+            <input id="sb-nums" value="${sandboxNums.join(',')}" style="background:var(--bg);border:1px solid var(--surface2);color:var(--text);padding:6px 10px;border-radius:6px;width:200px;font-size:.9rem">
+          </div>
+          <div>
+            <label style="font-size:.8rem;color:var(--text-dim)">k</label><br>
+            <input id="sb-k" type="number" value="${sandboxK}" min="3" style="background:var(--bg);border:1px solid var(--surface2);color:var(--text);padding:6px 10px;border-radius:6px;width:60px;font-size:.9rem">
+          </div>
+          <div>
+            <label style="font-size:.8rem;color:var(--text-dim)">dist</label><br>
+            <input id="sb-dist" type="number" value="${sandboxDist}" min="1" style="background:var(--bg);border:1px solid var(--surface2);color:var(--text);padding:6px 10px;border-radius:6px;width:60px;font-size:.9rem">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="sandboxLoad()">Load</button>
+        </div>
+
+        ${renderArray(sandboxNums, { classes })}
+
+        ${curStep ? `
+          <div class="sets-row">
+            <div class="set-box">
+              <h4>✅ Chosen (${curStep.chosen.length})</h4>
+              <div class="set-items">${curStep.chosen.map(v => `<span class="set-item chosen">${v}</span>`).join('')}</div>
+              <div style="text-align:center;margin-top:6px;font-size:.82rem;color:var(--green)">Sum = ${curStep.chosenSum}</div>
+            </div>
+            <div class="set-box">
+              <h4>📦 Rest (${curStep.rest.length})</h4>
+              <div class="set-items">${curStep.rest.map(v => `<span class="set-item rest">${v}</span>`).join('')}</div>
+            </div>
+          </div>
+          <div style="text-align:center;margin-top:8px">
+            <div class="sum-display">Cost = ${sandboxNums[0]} + ${curStep.chosenSum} = ${curStep.totalCost}</div>
+            <div class="best-display">Best = ${curStep.bestSum}</div>
+            <div style="font-size:.85rem;color:var(--text-dim)">${curStep.desc}</div>
+          </div>
+        ` : `
+          <div style="text-align:center;margin-top:16px;color:var(--text-dim)">Press "Step" or "Auto" to start the simulation.</div>
+        `}
+
+        <div class="step-counter">${simStep >= 0 ? `Step ${simStep + 1} / ${simSteps.length}` : 'Ready'}</div>
+        <div class="controls-row">
+          <button class="btn btn-secondary btn-sm" onclick="sandboxPrev()" ${simStep <= 0 ? 'disabled' : ''}>← Prev</button>
+          <button class="btn btn-primary btn-sm" onclick="sandboxNext()" ${simStep >= simSteps.length - 1 ? 'disabled' : ''}>Step →</button>
+          <button class="btn btn-secondary btn-sm" onclick="sandboxAuto()">▶ Auto</button>
+          <button class="btn btn-secondary btn-sm" onclick="sandboxReset()">↺ Reset</button>
+        </div>
+
+        ${simStep === simSteps.length - 1 ? `
+          <div style="text-align:center;margin-top:16px">
+            <div style="font-size:1.3rem;font-weight:700;color:var(--green)">🎉 Answer: ${simSteps[simSteps.length-1].bestSum}</div>
+          </div>
+        ` : ''}
+      </div>
+
+      <div id="l6-complete" style="text-align:center;margin-top:20px;">
+        <button class="btn btn-success" onclick="finishAll()">🏆 Complete the Quest!</button>
+      </div>
+    `;
+  }
+
+  window.sandboxLoad = function() {
+    const numsStr = document.getElementById('sb-nums').value;
+    sandboxNums = numsStr.split(',').map(s => parseInt(s.trim())).filter(v => !isNaN(v));
+    sandboxK = parseInt(document.getElementById('sb-k').value) || 3;
+    sandboxDist = parseInt(document.getElementById('sb-dist').value) || 1;
+    simStep = -1;
+    drawSandbox();
+  };
+
+  window.sandboxPrev = function() { if (simStep > 0) { simStep--; drawSandbox(); } };
+  window.sandboxNext = function() {
+    if (simStep < simSteps.length - 1) { simStep++; drawSandbox(); }
+  };
+  window.sandboxAuto = async function() {
+    simStep = -1;
+    drawSandbox();
+    for (let i = 0; i < simSteps.length; i++) {
+      await new Promise(r => setTimeout(r, 900));
+      simStep = i;
+      drawSandbox();
+    }
+  };
+  window.sandboxReset = function() { simStep = -1; drawSandbox(); };
+
+  window.finishAll = function() {
+    addXP(150);
+    completeLevel(6);
+    shootConfetti();
+    setTimeout(() => {
+      alert('🏆 Congratulations! You\'ve mastered LeetCode 3013!\n\nKey takeaways:\n1. nums[0] is always in the cost\n2. Pick k-1 split points in a sliding window of size dist+1\n3. Use two sorted sets to maintain k-1 smallest efficiently\n4. O(n log n) time complexity');
+    }, 500);
+  };
+
+  drawSandbox();
+}
+
+// ===================================================================
+//  RENDER LEVEL
+// ===================================================================
+function renderLevel(n) {
+  const main = document.getElementById('main-content');
+  const lvl = levels[n - 1];
+
+  main.innerHTML = `
+    <div class="level-container active" id="level-${n}">
+      <div class="level-header">
+        <div class="badge">LEVEL ${n}</div>
+        <h2>${lvl.title}</h2>
+        <p>${lvl.subtitle}</p>
+      </div>
+    </div>
+  `;
+
+  switch(n) {
+    case 1: renderLevel1(); break;
+    case 2: renderLevel2(); break;
+    case 3: renderLevel3(); break;
+    case 4: renderLevel4(); break;
+    case 5: renderLevel5(); break;
+    case 6: renderLevel6(); break;
+  }
+}
+
+// ===================================================================
+//  CONFETTI
+// ===================================================================
+function shootConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  const colors = ['#38bdf8', '#4ade80', '#facc15', '#f472b6', '#818cf8', '#c084fc'];
+
+  for (let i = 0; i < 150; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * 200,
+      vx: (Math.random() - 0.5) * 6,
+      vy: Math.random() * 4 + 2,
+      size: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+      life: 1,
+    });
+  }
+
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      if (p.life <= 0) return;
+      alive = true;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.1;
+      p.rot += p.rotSpeed;
+      p.life -= 0.008;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+      ctx.restore();
+    });
+    if (alive && frame < 300) {
+      frame++;
+      requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+  animate();
+}
+
+// ===================================================================
+//  INIT
+// ===================================================================
+renderLevelNav();
+renderLevel(1);
+</script>
+</body>
+</html>
