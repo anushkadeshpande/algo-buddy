@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DSA Quest: Minimum Cost Subarrays</title>
+  <title>DSA Quest — Gamified LeetCode Explainer</title>
   <style>
+    /* ===== VARIABLES ===== */
     :root {
       --bg: #0f172a;
       --surface: #1e293b;
@@ -22,1396 +23,1096 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; overflow-x: hidden;
     }
+    a { color: var(--accent); }
 
-    /* ---- Top Bar ---- */
+    /* ===== TOP BAR ===== */
     .topbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 32px;
-      background: var(--surface);
+      padding: 14px 28px; background: var(--surface);
       border-bottom: 1px solid var(--surface2);
       position: sticky; top: 0; z-index: 100;
     }
-    .topbar h1 { font-size: 1.2rem; color: var(--accent); }
-    .topbar .xp-bar {
-      display: flex; align-items: center; gap: 10px;
+    .topbar h1 { font-size: 1.15rem; color: var(--accent); white-space: nowrap; }
+    .topbar .right { display: flex; align-items: center; gap: 14px; }
+    .topbar .xp-bar { display: flex; align-items: center; gap: 8px; }
+    .topbar .xp-track { width: 160px; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+    .topbar .xp-fill { height:100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); transition: width .5s; }
+    .topbar .xp-label { font-size:.8rem; color:var(--text-dim); }
+    .topbar .back-btn {
+      background: var(--surface2); border: none; color: var(--text-dim);
+      padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: .82rem;
     }
-    .topbar .xp-bar .xp-track {
-      width: 200px; height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden;
-    }
-    .topbar .xp-bar .xp-fill {
-      height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
-      transition: width .5s ease;
-    }
-    .topbar .xp-label { font-size: .85rem; color: var(--text-dim); }
+    .topbar .back-btn:hover { color: var(--text); }
 
-    /* ---- Level Nav ---- */
-    .level-nav {
-      display: flex; justify-content: center; gap: 8px; padding: 20px;
-      flex-wrap: wrap;
-    }
+    /* ===== LEVEL NAV ===== */
+    .level-nav { display:flex; justify-content:center; gap:7px; padding:16px; flex-wrap:wrap; }
     .level-btn {
-      width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--surface2);
-      background: var(--surface); color: var(--text-dim); font-weight: 700;
-      cursor: pointer; transition: all .2s;
-      display: flex; align-items: center; justify-content: center; font-size: .95rem;
+      width:40px; height:40px; border-radius:50%; border:2px solid var(--surface2);
+      background: var(--surface); color: var(--text-dim); font-weight:700;
+      cursor:pointer; transition: all .2s; display:flex; align-items:center;
+      justify-content:center; font-size:.9rem;
     }
-    .level-btn.unlocked { border-color: var(--accent); color: var(--accent); }
-    .level-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-    .level-btn.completed { background: var(--green); color: var(--bg); border-color: var(--green); }
-    .level-btn:not(.unlocked):not(.active):not(.completed) { opacity: .45; cursor: not-allowed; }
+    .level-btn.unlocked { border-color:var(--accent); color:var(--accent); }
+    .level-btn.active { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+    .level-btn.completed { background:var(--green); color:var(--bg); border-color:var(--green); }
+    .level-btn:not(.unlocked):not(.active):not(.completed) { opacity:.4; cursor:not-allowed; }
 
-    /* ---- Main Content ---- */
-    .main { max-width: 960px; margin: 0 auto; padding: 20px 24px 60px; }
+    /* ===== MAIN ===== */
+    .main { max-width:900px; margin:0 auto; padding:20px 20px 80px; }
 
-    .level-container { display: none; }
-    .level-container.active { display: block; animation: fadeIn .4s ease; }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    /* ===== LANDING PAGE ===== */
+    .landing { max-width: 700px; margin: 0 auto; padding: 60px 20px; text-align: center; }
+    .landing h2 { font-size: 2rem; margin-bottom: 8px; }
+    .landing h2 span { color: var(--accent); }
+    .landing .tagline { color: var(--text-dim); font-size: 1.05rem; margin-bottom: 36px; }
 
-    .level-header {
-      text-align: center; margin-bottom: 24px;
+    .input-group { text-align: left; margin-bottom: 20px; }
+    .input-group label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom: 6px; font-weight: 600; }
+    .input-group input, .input-group textarea, .input-group select {
+      width: 100%; padding: 10px 14px; border-radius: 8px;
+      border: 1px solid var(--surface2); background: var(--surface);
+      color: var(--text); font-size: .92rem; font-family: inherit;
+      transition: border-color .2s;
     }
-    .level-header .badge {
-      display: inline-block; font-size: .75rem; font-weight: 700;
-      padding: 4px 12px; border-radius: 20px;
-      background: var(--accent2); color: white; margin-bottom: 8px;
+    .input-group input:focus, .input-group textarea:focus {
+      outline: none; border-color: var(--accent);
     }
-    .level-header h2 { font-size: 1.6rem; margin-bottom: 6px; }
-    .level-header p { color: var(--text-dim); font-size: .95rem; max-width: 600px; margin: 0 auto; }
+    .input-group textarea { min-height: 200px; resize: vertical; line-height: 1.55; }
+    .input-group .hint { font-size: .78rem; color: var(--text-dim); margin-top: 4px; }
 
-    /* ---- Cards ---- */
+    .generate-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 36px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: var(--bg); font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+      margin-top: 10px;
+    }
+    .generate-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(56,189,248,.25); }
+    .generate-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid transparent;
+      border-top-color: var(--bg); border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg { background: rgba(248,113,113,.12); border: 1px solid var(--red);
+      color: var(--red); padding: 10px 14px; border-radius: 8px;
+      margin-top: 14px; font-size: .88rem; text-align: left; display: none; }
+    .error-msg.show { display: block; }
+
+    /* ===== CARDS ===== */
     .card {
       background: var(--surface); border-radius: var(--radius);
-      padding: 24px; margin-bottom: 20px;
-      border: 1px solid var(--surface2);
+      padding: 22px; margin-bottom: 18px; border: 1px solid var(--surface2);
     }
-    .card h3 { color: var(--accent); margin-bottom: 12px; font-size: 1.1rem; }
+    .card h3 { color: var(--accent); margin-bottom: 10px; font-size: 1.05rem; }
     .card p, .card li { line-height: 1.65; color: var(--text-dim); }
-    .card ul { padding-left: 20px; }
+    .card ul, .card ol { padding-left: 20px; }
     .card li { margin-bottom: 4px; }
-
-    /* ---- Array Visualization ---- */
-    .array-vis {
-      display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;
-      margin: 16px 0;
+    .card strong { color: var(--text); }
+    .card code {
+      background: var(--bg); padding: 2px 6px; border-radius: 4px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: .85em;
     }
+
+    /* ===== ARRAY VIS ===== */
+    .array-vis { display:flex; gap:4px; justify-content:center; flex-wrap:wrap; margin:14px 0; }
     .arr-cell {
-      width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;
-      background: var(--surface2); border-radius: 8px; font-weight: 700; font-size: 1rem;
-      position: relative; transition: all .25s; cursor: default;
-      border: 2px solid transparent;
+      min-width:46px; height:46px; display:flex; align-items:center; justify-content:center;
+      padding: 0 6px;
+      background:var(--surface2); border-radius:8px; font-weight:700; font-size:.9rem;
+      position:relative; transition:all .25s; cursor:default; border:2px solid transparent;
     }
-    .arr-cell .idx {
-      position: absolute; bottom: -18px; font-size: .65rem; color: var(--text-dim);
-    }
-    .arr-cell.selected { border-color: var(--accent); background: rgba(56,189,248,.15); }
-    .arr-cell.split { border-color: var(--yellow); background: rgba(250,204,21,.12); }
-    .arr-cell.highlight { border-color: var(--green); background: rgba(74,222,128,.12); }
-    .arr-cell.window { border-color: var(--accent2); background: rgba(129,140,248,.10); }
-    .arr-cell.fade { opacity: .35; }
-    .arr-cell.clickable { cursor: pointer; }
-    .arr-cell.clickable:hover { transform: scale(1.1); border-color: var(--accent); }
+    .arr-cell .idx { position:absolute; bottom:-17px; font-size:.62rem; color:var(--text-dim); }
+    .arr-cell.highlight-green { border-color:var(--green); background:rgba(74,222,128,.12); }
+    .arr-cell.highlight-blue { border-color:var(--accent); background:rgba(56,189,248,.15); }
+    .arr-cell.highlight-yellow { border-color:var(--yellow); background:rgba(250,204,21,.12); }
+    .arr-cell.highlight-red { border-color:var(--red); background:rgba(248,113,113,.12); }
+    .arr-cell.highlight-purple { border-color:var(--accent2); background:rgba(129,140,248,.10); }
+    .arr-cell.highlight-pink { border-color:var(--accent3); background:rgba(244,114,182,.12); }
+    .arr-cell.fade { opacity:.3; }
+    .arr-cell.clickable { cursor:pointer; }
+    .arr-cell.clickable:hover { transform:scale(1.1); border-color:var(--accent); }
 
-    /* ---- Subarray coloring ---- */
-    .arr-cell.sub0 { border-color: #38bdf8; background: rgba(56,189,248,.15); }
-    .arr-cell.sub1 { border-color: #4ade80; background: rgba(74,222,128,.12); }
-    .arr-cell.sub2 { border-color: #facc15; background: rgba(250,204,21,.12); }
-    .arr-cell.sub3 { border-color: #f472b6; background: rgba(244,114,182,.12); }
-    .arr-cell.sub4 { border-color: #c084fc; background: rgba(192,132,252,.12); }
-
-    /* ---- Buttons ---- */
-    .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 10px 22px; border-radius: 8px; border: none;
-      font-weight: 600; font-size: .9rem; cursor: pointer;
-      transition: all .15s;
-    }
-    .btn-primary { background: var(--accent); color: var(--bg); }
-    .btn-primary:hover { background: #7dd3fc; }
-    .btn-secondary { background: var(--surface2); color: var(--text); }
-    .btn-secondary:hover { background: #475569; }
-    .btn-success { background: var(--green); color: var(--bg); }
-    .btn-success:hover { background: #86efac; }
-    .btn-danger { background: var(--red); color: white; }
-    .btn-sm { padding: 6px 14px; font-size: .82rem; }
-
-    .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
-
-    /* ---- Quiz ---- */
+    /* ===== QUIZ ===== */
     .quiz-option {
-      display: block; width: 100%; text-align: left;
-      padding: 12px 16px; margin: 8px 0; border-radius: 8px;
-      background: var(--surface2); border: 2px solid transparent;
-      color: var(--text); cursor: pointer; font-size: .92rem;
-      transition: all .15s;
+      display:block; width:100%; text-align:left;
+      padding:11px 15px; margin:7px 0; border-radius:8px;
+      background:var(--surface2); border:2px solid transparent;
+      color:var(--text); cursor:pointer; font-size:.9rem; transition:all .15s;
     }
-    .quiz-option:hover { border-color: var(--accent); }
-    .quiz-option.correct { border-color: var(--green); background: rgba(74,222,128,.15); }
-    .quiz-option.wrong { border-color: var(--red); background: rgba(248,113,113,.12); }
+    .quiz-option:hover:not(.correct):not(.wrong) { border-color:var(--accent); }
+    .quiz-option.correct { border-color:var(--green); background:rgba(74,222,128,.15); cursor:default; }
+    .quiz-option.wrong { border-color:var(--red); background:rgba(248,113,113,.12); cursor:default; }
 
     .feedback {
-      padding: 12px 16px; border-radius: 8px; margin-top: 12px;
-      font-size: .9rem; display: none;
+      padding:11px 15px; border-radius:8px; margin-top:10px;
+      font-size:.88rem; display:none;
     }
-    .feedback.show { display: block; animation: fadeIn .3s; }
-    .feedback.success { background: rgba(74,222,128,.12); border: 1px solid var(--green); color: var(--green); }
-    .feedback.error { background: rgba(248,113,113,.12); border: 1px solid var(--red); color: var(--red); }
-    .feedback.info { background: rgba(56,189,248,.10); border: 1px solid var(--accent); color: var(--accent); }
+    .feedback.show { display:block; animation:fadeIn .3s; }
+    .feedback.success { background:rgba(74,222,128,.12); border:1px solid var(--green); color:var(--green); }
+    .feedback.error { background:rgba(248,113,113,.12); border:1px solid var(--red); color:var(--red); }
+    .feedback.info { background:rgba(56,189,248,.10); border:1px solid var(--accent); color:var(--accent); }
 
-    /* ---- Sliding Window Viz ---- */
-    .window-bracket {
-      position: absolute; top: -10px; left: -4px; right: -4px; height: 4px;
-      background: var(--accent2); border-radius: 2px;
+    /* ===== BUTTONS ===== */
+    .btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:9px 20px; border-radius:8px; border:none;
+      font-weight:600; font-size:.88rem; cursor:pointer; transition:all .15s;
     }
+    .btn-primary { background:var(--accent); color:var(--bg); }
+    .btn-primary:hover { background:#7dd3fc; }
+    .btn-secondary { background:var(--surface2); color:var(--text); }
+    .btn-secondary:hover { background:#475569; }
+    .btn-success { background:var(--green); color:var(--bg); }
+    .btn-success:hover { background:#86efac; }
+    .btn-sm { padding:6px 13px; font-size:.82rem; }
+    .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center; }
 
-    .sum-display {
-      text-align: center; font-size: 1.3rem; font-weight: 700;
-      margin: 12px 0; color: var(--yellow);
+    /* ===== STEP VIS ===== */
+    .step-display {
+      text-align:center; margin:10px 0; padding:14px;
+      background:var(--bg); border-radius:8px; border:1px solid var(--surface2);
     }
-    .sum-display span { color: var(--text-dim); font-weight: 400; font-size: .9rem; }
+    .step-display .val { font-size:1.15rem; font-weight:700; color:var(--yellow); }
+    .step-display .label { font-size:.8rem; color:var(--text-dim); margin-top:2px; }
+    .step-controls { display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
 
-    .best-display {
-      text-align: center; font-size: 1rem; color: var(--green);
-      margin-bottom: 12px;
-    }
-
-    /* ---- Two-set viz ---- */
-    .sets-row {
-      display: flex; gap: 20px; justify-content: center; margin: 16px 0; flex-wrap: wrap;
-    }
-    .set-box {
-      flex: 1; min-width: 200px; max-width: 350px;
-      background: var(--bg); border-radius: var(--radius); padding: 16px;
-      border: 1px solid var(--surface2);
-    }
-    .set-box h4 { font-size: .85rem; color: var(--text-dim); margin-bottom: 10px; text-align: center; }
-    .set-box .set-items {
-      display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; min-height: 40px;
-    }
-    .set-item {
-      padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: .85rem;
-    }
-    .set-item.chosen { background: rgba(74,222,128,.18); color: var(--green); border: 1px solid var(--green); }
-    .set-item.rest { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
-
-    /* ---- Code block ---- */
+    /* ===== CODE ===== */
     .code-block {
-      background: #0d1117; border-radius: 8px; padding: 16px 20px;
-      font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: .82rem;
-      line-height: 1.7; overflow-x: auto; color: #c9d1d9; margin: 12px 0;
-      border: 1px solid #21262d;
-    }
-    .code-block .kw { color: #ff7b72; }
-    .code-block .fn { color: #d2a8ff; }
-    .code-block .cm { color: #8b949e; }
-    .code-block .str { color: #a5d6ff; }
-    .code-block .num { color: #79c0ff; }
-    .code-block .blank {
-      display: inline-block; min-width: 120px; border-bottom: 2px dashed var(--accent);
-      color: var(--accent); cursor: pointer; padding: 0 4px;
+      background:#0d1117; border-radius:8px; padding:16px 20px;
+      font-family: 'Cascadia Code','Fira Code',monospace; font-size:.82rem;
+      line-height:1.7; overflow-x:auto; color:#c9d1d9; margin:10px 0;
+      border:1px solid #21262d; white-space: pre-wrap;
     }
 
-    /* ---- Tooltip-style hint ---- */
-    .hint-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: none; border: 1px solid var(--surface2); color: var(--text-dim);
-      padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: .8rem;
-      margin-top: 8px;
-    }
-    .hint-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .hint-text {
-      display: none; padding: 10px 14px; margin-top: 8px;
-      background: rgba(56,189,248,.08); border-radius: 8px;
-      border: 1px solid rgba(56,189,248,.2); color: var(--accent); font-size: .88rem;
-    }
-    .hint-text.show { display: block; animation: fadeIn .3s; }
-
-    /* ---- Progress Stars ---- */
-    .stars { text-align: center; margin: 10px 0; font-size: 1.5rem; }
-    .stars .star { color: var(--surface2); transition: color .3s; }
-    .stars .star.earned { color: var(--yellow); }
-
-    /* ---- Responsive ---- */
-    @media (max-width: 640px) {
-      .topbar { padding: 12px 16px; }
-      .main { padding: 12px 12px 40px; }
-      .arr-cell { width: 42px; height: 42px; font-size: .85rem; }
-    }
-
-    /* ---- Animations ---- */
-    .pop { animation: pop .35s ease; }
-    @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
-
-    .slide-highlight {
-      animation: slideHL 0.6s ease;
-    }
-    @keyframes slideHL {
-      0% { box-shadow: 0 0 0 0 rgba(56,189,248,.6); }
-      100% { box-shadow: 0 0 0 0 transparent; }
-    }
-
-    /* ---- Confetti Canvas ---- */
-    #confetti-canvas {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 9999;
-    }
-
-    /* ---- Scroll behavior ---- */
-    html { scroll-behavior: smooth; }
-
+    /* ===== EXPLANATION BOX ===== */
     .explanation-box {
-      background: rgba(129,140,248,.08);
-      border: 1px solid rgba(129,140,248,.25);
-      border-radius: 8px; padding: 14px 18px; margin-top: 12px;
-      color: var(--accent2); font-size: .9rem; line-height: 1.6;
-      display: none;
+      background:rgba(129,140,248,.08); border:1px solid rgba(129,140,248,.25);
+      border-radius:8px; padding:12px 16px; margin-top:10px;
+      color:var(--accent2); font-size:.88rem; line-height:1.6;
     }
-    .explanation-box.show { display: block; animation: fadeIn .3s; }
 
+    /* ===== ANIMATION ===== */
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .fade-in { animation:fadeIn .4s ease; }
+    .pop { animation: pop .35s ease; }
+    @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+
+    /* ===== CONFETTI ===== */
+    #confetti-canvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; }
+
+    /* ===== LOADING OVERLAY ===== */
+    .loading-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,.88);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200; gap: 16px;
+    }
+    .loading-overlay .big-spinner {
+      width: 48px; height: 48px; border: 3px solid var(--surface2);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    .loading-overlay p { color: var(--text-dim); font-size: .95rem; max-width: 400px; text-align: center; }
+    .loading-overlay .substep { color: var(--accent); font-size: .85rem; margin-top: -8px; }
+
+    /* ===== SETS ===== */
+    .sets-row { display:flex; gap:16px; justify-content:center; margin:14px 0; flex-wrap:wrap; }
+    .set-box {
+      flex:1; min-width:170px; max-width:320px;
+      background:var(--bg); border-radius:var(--radius); padding:14px;
+      border:1px solid var(--surface2);
+    }
+    .set-box h4 { font-size:.82rem; color:var(--text-dim); margin-bottom:8px; text-align:center; }
+    .set-box .set-items { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; min-height:34px; }
+    .set-item { padding:3px 9px; border-radius:5px; font-weight:600; font-size:.82rem; }
+    .set-item.green { background:rgba(74,222,128,.18); color:var(--green); border:1px solid var(--green); }
+    .set-item.red { background:rgba(248,113,113,.12); color:var(--red); border:1px solid rgba(248,113,113,.3); }
+    .set-item.blue { background:rgba(56,189,248,.15); color:var(--accent); border:1px solid var(--accent); }
+    .set-item.yellow { background:rgba(250,204,21,.12); color:var(--yellow); border:1px solid var(--yellow); }
+    .set-item.purple { background:rgba(129,140,248,.12); color:var(--accent2); border:1px solid var(--accent2); }
+
+    /* ===== SAMPLES ===== */
+    .samples-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px; margin-top: 20px;
+    }
+    .sample-card {
+      background: var(--surface); border: 1px solid var(--surface2);
+      border-radius: var(--radius); padding: 16px; cursor: pointer;
+      transition: all .2s; text-align: left;
+    }
+    .sample-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .sample-card h4 { font-size: .95rem; margin-bottom: 4px; }
+    .sample-card p { font-size: .8rem; color: var(--text-dim); }
+    .sample-card .tag {
+      display: inline-block; font-size: .7rem; padding: 2px 8px;
+      border-radius: 10px; margin-top: 6px; font-weight: 600;
+    }
+    .tag-easy { background: rgba(74,222,128,.15); color: var(--green); }
+    .tag-medium { background: rgba(250,204,21,.12); color: var(--yellow); }
+    .tag-hard { background: rgba(248,113,113,.12); color: var(--red); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width:640px) {
+      .topbar { padding:10px 14px; flex-wrap:wrap; gap:8px; }
+      .main { padding:12px 10px 40px; }
+      .arr-cell { min-width:36px; height:36px; font-size:.8rem; }
+      .landing { padding: 30px 14px; }
+      .landing h2 { font-size: 1.5rem; }
+    }
+
+    /* ===== Progress bar inside card ===== */
+    .progress-track {
+      width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin: 8px 0;
+    }
+    .progress-fill {
+      height: 100%; background: var(--green); border-radius: 3px; transition: width .4s;
+    }
     .step-counter {
-      text-align: center; font-size: .85rem; color: var(--text-dim); margin-bottom: 8px;
+      text-align: center; font-size: .82rem; color: var(--text-dim); margin-bottom: 6px;
     }
-
-    .controls-row {
-      display: flex; gap: 10px; justify-content: center; align-items: center;
-      margin-top: 12px; flex-wrap: wrap;
-    }
-
-    .speed-control {
-      display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--text-dim);
-    }
-    .speed-control input { width: 80px; }
   </style>
 </head>
 <body>
 
 <canvas id="confetti-canvas"></canvas>
 
-<!-- Top Bar -->
+<!-- ============ TOP BAR ============ -->
 <div class="topbar">
-  <h1>🎮 DSA Quest: Minimum Cost Subarrays</h1>
-  <div class="xp-bar">
-    <span class="xp-label" id="xp-label">0 / 600 XP</span>
-    <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+  <h1>🎮 DSA Quest</h1>
+  <div class="right">
+    <div class="xp-bar" id="xp-section" style="display:none">
+      <span class="xp-label" id="xp-label">0 XP</span>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    </div>
+    <button class="back-btn" id="back-btn" style="display:none" onclick="showLanding()">← New Problem</button>
   </div>
 </div>
 
-<!-- Level Navigation -->
-<div class="level-nav" id="level-nav"></div>
-
-<!-- Main Content -->
-<div class="main" id="main-content"></div>
+<!-- ============ APP ROOT ============ -->
+<div id="app"></div>
 
 <script>
-// ===================================================================
-//  GAME STATE
-// ===================================================================
-const state = {
-  xp: 0,
-  maxXP: 600,
+// ════════════════════════════════════════════════════════════════════
+//  GLOBALS
+// ════════════════════════════════════════════════════════════════════
+let state = {
+  xp: 0, maxXP: 100,
   currentLevel: 1,
   levelsCompleted: new Set(),
   levelsUnlocked: new Set([1]),
+  questData: null,
 };
 
-function addXP(amount) {
-  state.xp = Math.min(state.xp + amount, state.maxXP);
-  document.getElementById('xp-fill').style.width = (state.xp / state.maxXP * 100) + '%';
-  document.getElementById('xp-label').textContent = `${state.xp} / ${state.maxXP} XP`;
+// Azure OpenAI config (loaded from .env)
+let envConfig = {
+  endpoint: '',
+  credential: '',
+  model: 'gpt-4o',
+};
+
+async function loadEnv() {
+  try {
+    const resp = await fetch('.env');
+    if (!resp.ok) throw new Error('.env not found');
+    const text = await resp.text();
+    text.split('\n').forEach(line => {
+      line = line.trim();
+      if (!line || line.startsWith('#')) return;
+      const eq = line.indexOf('=');
+      if (eq < 0) return;
+      const key = line.slice(0, eq).trim();
+      const val = line.slice(eq + 1).trim();
+      if (key === 'AZURE_INFERENCE_ENDPOINT') envConfig.endpoint = val;
+      if (key === 'AZURE_INFERENCE_CREDENTIAL') envConfig.credential = val;
+      if (key === 'LLM_MODEL') envConfig.model = val;
+    });
+  } catch (e) {
+    console.error('Failed to load .env:', e);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  XP SYSTEM
+// ════════════════════════════════════════════════════════════════════
+function addXP(n) {
+  state.xp = Math.min(state.xp + n, state.maxXP);
+  const pct = state.maxXP > 0 ? (state.xp / state.maxXP * 100) : 0;
+  document.getElementById('xp-fill').style.width = pct + '%';
+  document.getElementById('xp-label').textContent = state.xp + ' / ' + state.maxXP + ' XP';
 }
 
 function completeLevel(lvl) {
   if (state.levelsCompleted.has(lvl)) return;
   state.levelsCompleted.add(lvl);
-  if (lvl < levels.length) {
-    state.levelsUnlocked.add(lvl + 1);
-  }
+  const total = state.questData ? state.questData.levels.length : 1;
+  if (lvl < total) state.levelsUnlocked.add(lvl + 1);
   renderLevelNav();
-  shootConfetti();
+  if (state.levelsCompleted.size === total) shootConfetti();
 }
 
-function goToLevel(n) {
-  if (!state.levelsUnlocked.has(n)) return;
-  state.currentLevel = n;
-  renderLevelNav();
-  renderLevel(n);
-}
-
-// ===================================================================
-//  LEVELS DEFINITION
-// ===================================================================
-const levels = [
-  { id:1, title:"The Splitter", subtitle:"Understand the problem" },
-  { id:2, title:"The Reduction", subtitle:"Spot the key insight" },
-  { id:3, title:"The Window", subtitle:"Understand the distance constraint" },
-  { id:4, title:"Sliding Minimum", subtitle:"Slide & pick the cheapest" },
-  { id:5, title:"Two-Set Trick", subtitle:"The efficient data structure" },
-  { id:6, title:"The Solution", subtitle:"Put it all together" },
-];
-
-// ===================================================================
-//  LEVEL NAV RENDERING
-// ===================================================================
+// ════════════════════════════════════════════════════════════════════
+//  LEVEL NAV
+// ════════════════════════════════════════════════════════════════════
 function renderLevelNav() {
   const nav = document.getElementById('level-nav');
+  if (!nav || !state.questData) return;
   nav.innerHTML = '';
-  levels.forEach(l => {
+  state.questData.levels.forEach((_, i) => {
+    const n = i + 1;
     const btn = document.createElement('button');
     btn.className = 'level-btn';
-    btn.textContent = l.id;
-    if (state.levelsCompleted.has(l.id)) btn.classList.add('completed');
-    else if (l.id === state.currentLevel) btn.classList.add('active');
-    else if (state.levelsUnlocked.has(l.id)) btn.classList.add('unlocked');
-    btn.onclick = () => goToLevel(l.id);
+    btn.textContent = n;
+    if (state.levelsCompleted.has(n)) btn.classList.add('completed');
+    else if (n === state.currentLevel) btn.classList.add('active');
+    else if (state.levelsUnlocked.has(n)) btn.classList.add('unlocked');
+    btn.onclick = () => {
+      if (state.levelsUnlocked.has(n)) {
+        state.currentLevel = n;
+        renderLevelNav();
+        renderCurrentLevel();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
     nav.appendChild(btn);
   });
 }
 
-// ===================================================================
-//  UTILITY: render array cells
-// ===================================================================
-function renderArray(arr, opts = {}) {
-  const { classes = {}, clickable = [], onClick, showIdx = true } = opts;
-  let html = '<div class="array-vis">';
-  arr.forEach((v, i) => {
-    let cls = 'arr-cell';
-    if (classes[i]) cls += ' ' + classes[i];
-    if (clickable.includes(i)) cls += ' clickable';
-    html += `<div class="${cls}" data-idx="${i}">${v}`;
-    if (showIdx) html += `<span class="idx">${i}</span>`;
-    html += `</div>`;
-  });
-  html += '</div>';
-  return html;
-}
+// ════════════════════════════════════════════════════════════════════
+//  LANDING PAGE
+// ════════════════════════════════════════════════════════════════════
+const SAMPLE_TWO_SUM = `1. Two Sum\nGiven an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\nYou can return the answer in any order.\n\nExample 1:\nInput: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].\n\nExample 2:\nInput: nums = [3,2,4], target = 6\nOutput: [1,2]\n\nConstraints:\n2 <= nums.length <= 10^4\n-10^9 <= nums[i] <= 10^9\nOnly one valid answer exists.`;
 
-// ===================================================================
-//  LEVEL 1: THE SPLITTER
-// ===================================================================
-function renderLevel1() {
-  const nums = [1, 3, 2, 6, 4, 2];
-  const k = 3;
-  let splits = new Set(); // indices where a NEW subarray starts
+const SAMPLE_SLIDING_WINDOW = `239. Sliding Window Maximum\nYou are given an array of integers nums, there is a sliding window of size k which is moving from the very left of the array to the very right. You can only see the k numbers in the window. Each time the sliding window moves right by one position.\nReturn the max sliding window.\n\nExample 1:\nInput: nums = [1,3,-1,-3,5,3,6,7], k = 3\nOutput: [3,3,5,5,6,7]\n\nConstraints:\n1 <= nums.length <= 10^5\n-10^4 <= nums[i] <= 10^4\n1 <= k <= nums.length`;
 
-  const container = document.getElementById('level-1');
-  function draw() {
-    // Compute subarray coloring
-    const subColors = {};
-    let subIdx = 0;
-    for (let i = 0; i < nums.length; i++) {
-      if (splits.has(i)) subIdx++;
-      subColors[i] = 'sub' + (subIdx % 5);
-    }
-    // cost
-    const splitArr = [0, ...Array.from(splits).sort((a,b)=>a-b)];
-    const cost = splitArr.reduce((s, idx) => s + nums[idx], 0);
-    const numSubs = splitArr.length;
+const SAMPLE_MERGE = `56. Merge Intervals\nGiven an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals, and return an array of the non-overlapping intervals that cover all the intervals in the input.\n\nExample 1:\nInput: intervals = [[1,3],[2,6],[8,10],[15,18]]\nOutput: [[1,6],[8,10],[15,18]]\nExplanation: Since intervals [1,3] and [2,6] overlap, merge them into [1,6].\n\nConstraints:\n1 <= intervals.length <= 10^4\nintervals[i].length == 2\n0 <= starti <= endi <= 10^4`;
 
-    let html = `
-      <div class="card">
-        <h3>📝 Your Task</h3>
-        <p>Click on cells to place <strong>${k - 1} dividers</strong> and split the array into <strong>${k} contiguous subarrays</strong>.</p>
-        <p style="margin-top:6px">The <strong>cost</strong> of each subarray is its <em>first element</em>. Your goal: <strong>minimize the total cost</strong>.</p>
-      </div>
-      <div class="card">
-        <h3>Array: [${nums.join(', ')}] &nbsp; k = ${k}</h3>
-        <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:8px">Click a cell (index 1-${nums.length-1}) to toggle a split point before it</p>
-        ${renderArray(nums, { classes: subColors, clickable: [1,2,3,4,5] })}
-        <div style="margin-top:28px;text-align:center;">
-          <div class="sum-display">Total Cost = ${cost} <span>(sum of first elements of each subarray)</span></div>
-          <div style="font-size:.85rem;color:var(--text-dim)">Subarrays: ${numSubs} / ${k}</div>
-        </div>
-        <div id="l1-feedback" class="feedback" style="margin-top:12px"></div>
-        <div class="btn-row">
-          <button class="btn btn-secondary btn-sm" onclick="splits1.clear();renderLevel1Draw()">Reset</button>
-          <button class="btn btn-primary" onclick="checkLevel1()" ${numSubs !== k ? 'disabled' : ''}>Check Answer ✓</button>
-        </div>
-      </div>
-    `;
-    container.innerHTML = html;
+function showLanding() {
+  state.questData = null;
+  state.xp = 0; state.maxXP = 100;
+  state.currentLevel = 1;
+  state.levelsCompleted = new Set();
+  state.levelsUnlocked = new Set([1]);
+  document.getElementById('xp-section').style.display = 'none';
+  document.getElementById('back-btn').style.display = 'none';
+  document.getElementById('xp-fill').style.width = '0%';
+  document.getElementById('xp-label').textContent = '0 XP';
 
-    // attach click
-    container.querySelectorAll('.arr-cell.clickable').forEach(cell => {
-      cell.addEventListener('click', () => {
-        const idx = parseInt(cell.dataset.idx);
-        if (splits.has(idx)) splits.delete(idx);
-        else if (splits.size < k - 1) splits.add(idx);
-        draw();
-      });
-    });
-  }
+  document.getElementById('app').innerHTML = `
+    <div class="landing fade-in">
+      <h2>🧩 <span>DSA Quest</span></h2>
+      <p class="tagline">Paste any LeetCode problem → Get a gamified, visual, step-by-step explanation</p>
 
-  // expose for reset
-  window.splits1 = splits;
-  window.renderLevel1Draw = draw;
+      <div id="env-status" style="margin-bottom:20px;padding:10px 14px;border-radius:8px;font-size:.85rem;${
+        envConfig.endpoint && envConfig.credential
+          ? 'background:rgba(74,222,128,.1);border:1px solid var(--green);color:var(--green)'
+          : 'background:rgba(248,113,113,.1);border:1px solid var(--red);color:var(--red)'
+      }">${
+        envConfig.endpoint && envConfig.credential
+          ? '✅ Azure OpenAI connected — Model: <strong>' + escapeHTML(envConfig.model) + '</strong>'
+          : '❌ Missing .env config. Create a <code>.env</code> file with AZURE_INFERENCE_ENDPOINT and AZURE_INFERENCE_CREDENTIAL. See <code>.env.example</code>.'
+      }</div>
 
-  window.checkLevel1 = function() {
-    const splitArr = [0, ...Array.from(splits).sort((a,b)=>a-b)];
-    const cost = splitArr.reduce((s, idx) => s + nums[idx], 0);
-    const fb = document.getElementById('l1-feedback');
-    if (cost === 5) {
-      fb.className = 'feedback show success';
-      fb.textContent = '🎉 Perfect! Cost = 5 is the minimum! The first subarray always starts at index 0 (cost = 1), and you picked indices 2 and 5 (cost = 2 + 2).';
-      addXP(100);
-      completeLevel(1);
-    } else if (cost <= 7) {
-      fb.className = 'feedback show info';
-      fb.textContent = `Cost = ${cost}. Good attempt! But can you do better? Hint: try to make the split points land on smaller numbers.`;
-    } else {
-      fb.className = 'feedback show error';
-      fb.textContent = `Cost = ${cost}. That's a bit high. Remember: you want the FIRST elements of each subarray to be as small as possible.`;
-    }
-  };
-
-  draw();
-}
-
-// ===================================================================
-//  LEVEL 2: THE REDUCTION
-// ===================================================================
-function renderLevel2() {
-  const container = document.getElementById('level-2');
-  let quizAnswered = [false, false];
-  let quizCorrect = [false, false];
-
-  function draw() {
-    container.innerHTML = `
-      <div class="card">
-        <h3>🔍 Observation Time</h3>
-        <p>In Level 1, you split <code>[1, 3, 2, 6, 4, 2]</code> into 3 subarrays. The cost was the sum of the
-        <strong>first element</strong> of each subarray.</p>
-        <p style="margin-top:8px">Notice: the first subarray <em>always</em> starts at index 0. So <code>nums[0]</code> is <em>always</em> part of the cost, no matter what.</p>
-        <p style="margin-top:8px;color:var(--accent)"><strong>Total cost = nums[0] + nums[i₁] + nums[i₂] + ... + nums[iₖ₋₁]</strong></p>
-        <p style="margin-top:8px">where i₁, i₂, ..., iₖ₋₁ are the starting indices of subarrays 2 through k.</p>
+      <div class="input-group">
+        <label>📝 LeetCode Problem</label>
+        <textarea id="problem-input" placeholder="Paste the full problem description here, including examples and constraints..."></textarea>
       </div>
 
-      <div class="card">
-        <h3>❓ Quiz 1: What's fixed?</h3>
-        <p>When dividing into k subarrays, which part of the cost can you NOT change?</p>
-        <button class="quiz-option" data-q="0" data-a="0" onclick="answerQuiz2(0,0)">A) The last element nums[n-1]</button>
-        <button class="quiz-option" data-q="0" data-a="1" onclick="answerQuiz2(0,1)">B) The first element nums[0]</button>
-        <button class="quiz-option" data-q="0" data-a="2" onclick="answerQuiz2(0,2)">C) The maximum element</button>
-        <div id="l2-fb0" class="feedback"></div>
-      </div>
+      <button class="generate-btn" id="gen-btn" onclick="handleGenerate()">
+        ✨ Generate Visual Explanation
+      </button>
 
-      <div class="card">
-        <h3>❓ Quiz 2: The real problem</h3>
-        <p>Since nums[0] is fixed, the problem reduces to:</p>
-        <button class="quiz-option" data-q="1" data-a="0" onclick="answerQuiz2(1,0)">A) Sort the entire array and pick the smallest k elements</button>
-        <button class="quiz-option" data-q="1" data-a="1" onclick="answerQuiz2(1,1)">B) Pick k−1 indices (from 1..n−1) to be split points, minimizing the sum of nums at those indices</button>
-        <button class="quiz-option" data-q="1" data-a="2" onclick="answerQuiz2(1,2)">C) Find the minimum element and multiply by k</button>
-        <div id="l2-fb1" class="feedback"></div>
-      </div>
+      <div class="error-msg" id="landing-error"></div>
 
-      <div id="l2-next" style="text-align:center;margin-top:16px;display:none">
-        <p style="color:var(--green);margin-bottom:10px;font-weight:600">✅ Key Insight Unlocked!</p>
-        <div class="card" style="text-align:left">
-          <p><strong>The problem reduces to:</strong> Choose k−1 indices from positions 1 to n−1 to act as split points.
-          Minimize the sum of <code>nums[splitPoint]</code> for each chosen split point. But there's a constraint on which indices you can pick (the <code>dist</code> constraint). Let's explore that next!</p>
-        </div>
-        <button class="btn btn-success" onclick="goToLevel(3)">Continue to Level 3 →</button>
-      </div>
-    `;
-  }
-
-  window.answerQuiz2 = function(q, a) {
-    if (quizAnswered[q]) return;
-    const correct = (q === 0 && a === 1) || (q === 1 && a === 1);
-    quizAnswered[q] = true;
-    quizCorrect[q] = correct;
-
-    // Style buttons
-    container.querySelectorAll(`.quiz-option[data-q="${q}"]`).forEach(btn => {
-      const ba = parseInt(btn.dataset.a);
-      if ((q === 0 && ba === 1) || (q === 1 && ba === 1)) btn.classList.add('correct');
-      else if (ba === a && !correct) btn.classList.add('wrong');
-      btn.style.pointerEvents = 'none';
-    });
-
-    const fb = document.getElementById(`l2-fb${q}`);
-    if (correct) {
-      fb.className = 'feedback show success';
-      fb.textContent = q === 0
-        ? '✅ Correct! The first subarray always starts at 0, so nums[0] is always included.'
-        : '✅ Exactly! We need to choose k−1 split points from indices 1..n−1 to minimize their sum (plus nums[0]).';
-      addXP(50);
-    } else {
-      fb.className = 'feedback show error';
-      fb.textContent = q === 0
-        ? '❌ Not quite. Think about which subarray is always forced to exist.'
-        : '❌ Not quite. Remember, the subarrays must be contiguous, and we\'re choosing where to split.';
-    }
-
-    if (quizAnswered[0] && quizAnswered[1] && quizCorrect[0] && quizCorrect[1]) {
-      document.getElementById('l2-next').style.display = 'block';
-      completeLevel(2);
-    }
-  };
-
-  draw();
-}
-
-// ===================================================================
-//  LEVEL 3: THE WINDOW (dist constraint)
-// ===================================================================
-function renderLevel3() {
-  const container = document.getElementById('level-3');
-  const nums = [1, 3, 2, 6, 4, 2];
-  const k = 3;
-  const dist = 3;
-  let selectedIndices = new Set();
-  let quizDone = false;
-
-  function draw() {
-    const sortedSel = Array.from(selectedIndices).sort((a,b)=>a-b);
-    let valid = null;
-    let distVal = null;
-    if (sortedSel.length === k - 1) {
-      distVal = sortedSel[sortedSel.length - 1] - sortedSel[0];
-      valid = distVal <= dist;
-    }
-
-    const classes = {};
-    nums.forEach((_, i) => {
-      if (i === 0) classes[i] = 'sub0';
-      else if (selectedIndices.has(i)) classes[i] = valid === true ? 'highlight' : valid === false ? 'split' : 'selected';
-    });
-
-    // Show the valid window range
-    let windowHtml = '';
-    if (sortedSel.length >= 1) {
-      const first = sortedSel[0];
-      windowHtml = `<p style="margin-top:8px;font-size:.88rem">First split = index ${first}, so last split must be ≤ index ${first} + ${dist} = ${first + dist}</p>`;
-    }
-
-    container.innerHTML = `
-      <div class="card">
-        <h3>📏 The Distance Constraint</h3>
-        <p>You've learned that we pick k−1 split points. But there's a catch:</p>
-        <p style="margin-top:8px;color:var(--accent);font-weight:600">
-          The last split point minus the first split point must be ≤ dist.
-        </p>
-        <p style="margin-top:8px">In other words: <strong>i<sub>k−1</sub> − i<sub>1</sub> ≤ dist</strong></p>
-        <p style="margin-top:8px;color:var(--text-dim)">All k−1 split points must fit within a window of size <strong>dist + 1</strong> consecutive positions.</p>
-      </div>
-
-      <div class="card">
-        <h3>🧪 Experiment: [${nums.join(', ')}], k=${k}, dist=${dist}</h3>
-        <p style="font-size:.85rem;color:var(--text-dim)">Click to select exactly ${k-1} split points from indices 1-${nums.length-1}. See if they satisfy i<sub>k-1</sub> − i<sub>1</sub> ≤ ${dist}.</p>
-        ${renderArray(nums, { classes, clickable: [1,2,3,4,5] })}
-        <div style="text-align:center;margin-top:24px;">
-          ${sortedSel.length === k - 1
-            ? `<div style="font-size:1.1rem;font-weight:700;color:${valid ? 'var(--green)' : 'var(--red)'}">
-                i<sub>k-1</sub> − i<sub>1</sub> = ${sortedSel[sortedSel.length-1]} − ${sortedSel[0]} = ${distVal} ${valid ? '≤' : '>'} ${dist}  →  ${valid ? '✅ VALID' : '❌ INVALID'}
-              </div>`
-            : `<div style="color:var(--text-dim)">Selected ${sortedSel.length} / ${k - 1} split points</div>`
-          }
-          ${windowHtml}
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-secondary btn-sm" onclick="level3sel.clear();renderLevel3Draw()">Reset</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>❓ What does this constraint mean geometrically?</h3>
-        <p>If you must pick k−1 split points such that the last minus the first ≤ dist, that means...</p>
-        <button class="quiz-option" onclick="answerLevel3Quiz(0)" id="l3q0">A) The split points can be anywhere in the array</button>
-        <button class="quiz-option" onclick="answerLevel3Quiz(1)" id="l3q1">B) All k−1 split points must lie inside some window of dist+1 consecutive indices</button>
-        <button class="quiz-option" onclick="answerLevel3Quiz(2)" id="l3q2">C) The split points must be exactly dist apart</button>
-        <div id="l3-fb" class="feedback"></div>
-      </div>
-
-      <div id="l3-next" style="text-align:center;margin-top:16px;display:${quizDone ? 'block' : 'none'}">
-        <div class="card" style="text-align:left">
-          <h3 style="color:var(--green)">🧠 The Window Insight</h3>
-          <p>The k−1 split points must all fit inside a <strong>sliding window</strong> of size <code>dist + 1</code>.</p>
-          <p style="margin-top:8px">So the algorithm becomes: slide a window of size dist+1 across indices 1..n−1, and in each window position, pick the <strong>k−1 smallest values</strong>. Track the minimum sum!</p>
-        </div>
-        <button class="btn btn-success" onclick="goToLevel(4)">Continue to Level 4 →</button>
-      </div>
-    `;
-
-    // clicks
-    container.querySelectorAll('.arr-cell.clickable').forEach(cell => {
-      cell.addEventListener('click', () => {
-        const idx = parseInt(cell.dataset.idx);
-        if (selectedIndices.has(idx)) selectedIndices.delete(idx);
-        else if (selectedIndices.size < k - 1) selectedIndices.add(idx);
-        draw();
-      });
-    });
-  }
-
-  window.level3sel = selectedIndices;
-  window.renderLevel3Draw = draw;
-
-  window.answerLevel3Quiz = function(a) {
-    if (quizDone) return;
-    const fb = document.getElementById('l3-fb');
-    if (a === 1) {
-      quizDone = true;
-      document.getElementById('l3q1').classList.add('correct');
-      fb.className = 'feedback show success';
-      fb.textContent = '✅ Exactly! All k−1 points must fit in a sliding window of width dist+1. This is the crucial insight!';
-      addXP(100);
-      completeLevel(3);
-      document.getElementById('l3-next').style.display = 'block';
-    } else {
-      document.getElementById(`l3q${a}`).classList.add('wrong');
-      fb.className = 'feedback show error';
-      fb.textContent = '❌ Not quite. Think about what "last - first ≤ dist" means for a set of indices.';
-    }
-    ['l3q0','l3q1','l3q2'].forEach(id => document.getElementById(id).style.pointerEvents = 'none');
-  };
-
-  draw();
-}
-
-// ===================================================================
-//  LEVEL 4: SLIDING WINDOW SIMULATION
-// ===================================================================
-function renderLevel4() {
-  const container = document.getElementById('level-4');
-  const nums = [10, 1, 2, 2, 2, 1];
-  const k = 4;
-  const dist = 3;
-  const windowSize = dist + 1; // 4
-  // valid windows: indices 1..5, window size 4
-  // windows: [1,2,3,4], [2,3,4,5]
-  // In each window, pick k-1=3 smallest
-
-  let windowStart = 1;
-  const maxStart = nums.length - windowSize; // 5 - 4 + 1 = 2
-  let bestSum = Infinity;
-  let bestStart = -1;
-  let history = [];
-  let animating = false;
-
-  function getWindowSmallest(start) {
-    const windowVals = [];
-    for (let i = start; i < start + windowSize && i < nums.length; i++) {
-      windowVals.push({ val: nums[i], idx: i });
-    }
-    windowVals.sort((a, b) => a.val - b.val);
-    return windowVals.slice(0, k - 1);
-  }
-
-  function draw() {
-    const chosen = getWindowSmallest(windowStart);
-    const chosenIndices = new Set(chosen.map(c => c.idx));
-    const windowSum = chosen.reduce((s, c) => s + c.val, 0) + nums[0];
-
-    if (windowSum < bestSum) {
-      bestSum = windowSum;
-      bestStart = windowStart;
-    }
-
-    const classes = {};
-    for (let i = 0; i < nums.length; i++) {
-      if (i === 0) classes[i] = 'sub0';
-      else if (i >= windowStart && i < windowStart + windowSize) {
-        classes[i] = chosenIndices.has(i) ? 'highlight' : 'window';
-      } else {
-        classes[i] = 'fade';
-      }
-    }
-
-    container.innerHTML = `
-      <div class="card">
-        <h3>🔄 Sliding Window in Action</h3>
-        <p>Array: [${nums.join(', ')}], k=${k}, dist=${dist}</p>
-        <p style="margin-top:6px;color:var(--text-dim)">Window size = dist+1 = ${windowSize}. We need to pick k−1 = ${k-1} smallest values in each window.</p>
-        <p style="margin-top:6px;color:var(--text-dim)">The window slides across indices 1 to ${nums.length - 1}.</p>
-      </div>
-
-      <div class="card">
-        <div class="step-counter">Window Position: ${windowStart} to ${windowStart + windowSize - 1} &nbsp;|&nbsp; Step ${windowStart} of ${maxStart}</div>
-        ${renderArray(nums, { classes })}
-        <div style="margin-top:24px;text-align:center">
-          <div style="font-size:.82rem;color:var(--text-dim);margin-bottom:4px">
-            <span style="display:inline-block;width:12px;height:12px;background:rgba(129,140,248,.3);border:1px solid var(--accent2);border-radius:3px;vertical-align:middle"></span> In window &nbsp;
-            <span style="display:inline-block;width:12px;height:12px;background:rgba(74,222,128,.2);border:1px solid var(--green);border-radius:3px;vertical-align:middle"></span> Chosen (k−1 smallest) &nbsp;
-            <span style="display:inline-block;width:12px;height:12px;background:rgba(56,189,248,.2);border:1px solid var(--accent);border-radius:3px;vertical-align:middle"></span> nums[0] (always included)
+      <div style="margin-top:40px;text-align:left">
+        <p style="color:var(--text-dim);font-size:.88rem;margin-bottom:10px;">Or try a sample problem:</p>
+        <div class="samples-grid">
+          <div class="sample-card" onclick="document.getElementById('problem-input').value=SAMPLE_TWO_SUM">
+            <h4>#1. Two Sum</h4>
+            <p>Find two numbers that add to target</p>
+            <span class="tag tag-easy">Easy</span>
           </div>
-          <div class="sum-display">
-            Window Cost = nums[0] + ${chosen.map(c=>'nums['+c.idx+']').join(' + ')} = ${nums[0]} + ${chosen.map(c=>c.val).join(' + ')} = ${windowSum}
+          <div class="sample-card" onclick="document.getElementById('problem-input').value=SAMPLE_SLIDING_WINDOW">
+            <h4>#239. Sliding Window Maximum</h4>
+            <p>Maximum in each sliding window</p>
+            <span class="tag tag-hard">Hard</span>
           </div>
-          <div class="best-display">Best so far: ${bestSum} ${bestStart >= 0 ? '(window starting at ' + bestStart + ')' : ''}</div>
-        </div>
-        <div class="controls-row">
-          <button class="btn btn-secondary btn-sm" onclick="level4Prev()" ${windowStart <= 1 ? 'disabled' : ''}>← Previous</button>
-          <button class="btn btn-primary btn-sm" onclick="level4Next()" ${windowStart >= maxStart ? 'disabled' : ''}>Next →</button>
-          <button class="btn btn-secondary btn-sm" onclick="level4Auto()">▶ Auto-play</button>
-          <button class="btn btn-secondary btn-sm" onclick="level4Reset()">↺ Reset</button>
-        </div>
-      </div>
-
-      ${windowStart >= maxStart ? `
-      <div class="card" style="border-color:var(--green)">
-        <h3 style="color:var(--green)">🎯 Result</h3>
-        <p>After sliding through all valid window positions, the minimum cost is <strong>${bestSum}</strong>.</p>
-        <p style="margin-top:8px;color:var(--text-dim)">But wait — recomputing the k−1 smallest in each window from scratch is O(window_size × log) per step. For large arrays, we need something smarter. That's Level 5!</p>
-      </div>
-      <div class="card">
-        <h3>❓ Time complexity question</h3>
-        <p>If we recompute the k−1 smallest for every window position naively, what's the complexity?</p>
-        <button class="quiz-option" onclick="answerLevel4Quiz(0)">A) O(n)</button>
-        <button class="quiz-option" onclick="answerLevel4Quiz(1)">B) O(n × dist × log(dist))</button>
-        <button class="quiz-option" onclick="answerLevel4Quiz(2)">C) O(n log n)</button>
-        <div id="l4-fb" class="feedback"></div>
-      </div>
-      ` : ''}
-    `;
-  }
-
-  window.level4Prev = function () {
-    if (windowStart > 1) { windowStart--; bestSum = Infinity; bestStart = -1; draw(); }
-  };
-  window.level4Next = function () {
-    if (windowStart < maxStart) { windowStart++; draw(); }
-  };
-  window.level4Auto = async function () {
-    if (animating) return;
-    animating = true;
-    windowStart = 1; bestSum = Infinity; bestStart = -1;
-    draw();
-    for (let i = 1; i < maxStart; i++) {
-      await new Promise(r => setTimeout(r, 1200));
-      if (!animating) return;
-      windowStart++;
-      draw();
-    }
-    animating = false;
-  };
-  window.level4Reset = function () {
-    animating = false;
-    windowStart = 1; bestSum = Infinity; bestStart = -1;
-    draw();
-  };
-
-  window.answerLevel4Quiz = function(a) {
-    const fb = document.getElementById('l4-fb');
-    container.querySelectorAll('.quiz-option').forEach(b => b.style.pointerEvents = 'none');
-    if (a === 1) {
-      container.querySelectorAll('.quiz-option')[1].classList.add('correct');
-      fb.className = 'feedback show success';
-      fb.textContent = '✅ Correct! Sorting each window is O(dist log dist), and we do it for O(n) window positions. We need to bring this down to O(n log n) total.';
-      addXP(100);
-      completeLevel(4);
-    } else {
-      container.querySelectorAll('.quiz-option')[a].classList.add('wrong');
-      container.querySelectorAll('.quiz-option')[1].classList.add('correct');
-      fb.className = 'feedback show error';
-      fb.textContent = '❌ The answer is O(n × dist × log(dist)). Each window has up to dist+1 elements to sort, and there are O(n) windows.';
-      addXP(20);
-      completeLevel(4);
-    }
-    fb.innerHTML += '<div style="margin-top:12px"><button class="btn btn-success" onclick="goToLevel(5)">Continue to Level 5 →</button></div>';
-  };
-
-  draw();
-}
-
-// ===================================================================
-//  LEVEL 5: TWO-SET TRICK
-// ===================================================================
-function renderLevel5() {
-  const container = document.getElementById('level-5');
-  const nums = [10, 1, 2, 2, 2, 1];
-  const k = 4;
-  const dist = 3;
-  const windowSize = dist + 1;
-
-  let step = 0;
-  // Steps:
-  // 0: initial window [1..4] → values [1,2,2,2], chosen = smallest 3: {1,2,2}, rest = {2}
-  // 1: slide right: remove index 1 (val 1), add index 5 (val 1)
-  //    new window [2..5] → values [2,2,2,1]
-  //    chosen = {1,2,2}, rest = {2}
-
-  const steps = [
-    {
-      title: 'Step 1: Initialize',
-      desc: 'Window covers indices 1-4. We maintain two sorted sets: "Chosen" holds the k−1=3 smallest values, "Rest" holds the remaining values in the window.',
-      windowRange: [1, 4],
-      chosen: [1, 2, 2],
-      rest: [2],
-      chosenSum: 5,
-      action: null,
-      highlight: 'We insert all window elements: 1, 2, 2, 2. The 3 smallest (1, 2, 2) go into Chosen. The remainder (2) goes into Rest.'
-    },
-    {
-      title: 'Step 2: Slide Right',
-      desc: 'Window moves to indices 2-5. We remove the element leaving (index 1, value 1) and add the element entering (index 5, value 1).',
-      windowRange: [2, 5],
-      chosen: [1, 2, 2],
-      rest: [2],
-      chosenSum: 5,
-      action: 'remove 1 (was in Chosen), add 1 (goes to Chosen since ≤ max of Chosen). But now Chosen has 3 items and Rest needs to stay balanced.',
-      highlight: 'Remove: value 1 was in Chosen → remove it, chosenSum drops. Add: value 1 ≤ max(Chosen)=2, so insert into Chosen. Now |Chosen|=3 ✓. chosenSum = 1+2+2 = 5.',
-      removing: { val: 1, from: 'chosen' },
-      adding: { val: 1, to: 'chosen' },
-    },
-    {
-      title: 'Step 3: Result',
-      desc: 'We\'ve checked all window positions. The minimum chosenSum was 5, so the answer is nums[0] + 5 = 10 + 5 = 15.',
-      windowRange: [2, 5],
-      chosen: [1, 2, 2],
-      rest: [2],
-      chosenSum: 5,
-      action: null,
-      highlight: 'The two-set technique lets us maintain the k−1 smallest elements as the window slides, with O(log n) per add/remove operation. Total: O(n log n)!'
-    },
-  ];
-
-  function draw() {
-    const s = steps[step];
-    const classes = {};
-    for (let i = 0; i < nums.length; i++) {
-      if (i === 0) classes[i] = 'sub0';
-      else if (i >= s.windowRange[0] && i <= s.windowRange[1]) classes[i] = 'window';
-      else classes[i] = 'fade';
-    }
-
-    container.innerHTML = `
-      <div class="card">
-        <h3>⚡ The Two-Set Trick</h3>
-        <p>Instead of recomputing k−1 smallest each time, we maintain two sorted multisets:</p>
-        <ul>
-          <li><strong style="color:var(--green)">Chosen</strong>: always holds exactly k−1 = ${k-1} smallest values in the current window</li>
-          <li><strong style="color:var(--red)">Rest</strong>: holds anything else in the window</li>
-        </ul>
-        <p style="margin-top:8px">Invariant: <strong>max(Chosen) ≤ min(Rest)</strong></p>
-        <p style="margin-top:4px;color:var(--text-dim)">When an element enters/leaves the window, we update the sets and rebalance to maintain this invariant in O(log n).</p>
-      </div>
-
-      <div class="card">
-        <h3>${s.title}</h3>
-        <p>${s.desc}</p>
-        <div class="step-counter">Step ${step + 1} / ${steps.length}</div>
-        ${renderArray(nums, { classes })}
-
-        <div class="sets-row">
-          <div class="set-box">
-            <h4>✅ Chosen (k−1 = ${k-1} smallest)</h4>
-            <div class="set-items">
-              ${s.chosen.map(v => `<span class="set-item chosen">${v}</span>`).join('')}
-            </div>
-            <div style="text-align:center;margin-top:8px;font-size:.85rem;color:var(--green)">
-              Sum = ${s.chosenSum}
-            </div>
-          </div>
-          <div class="set-box">
-            <h4>📦 Rest</h4>
-            <div class="set-items">
-              ${s.rest.map(v => `<span class="set-item rest">${v}</span>`).join('')}
-            </div>
+          <div class="sample-card" onclick="document.getElementById('problem-input').value=SAMPLE_MERGE">
+            <h4>#56. Merge Intervals</h4>
+            <p>Merge overlapping intervals</p>
+            <span class="tag tag-medium">Medium</span>
           </div>
         </div>
-
-        <div class="explanation-box show" style="margin-top:12px">
-          ${s.highlight}
-        </div>
-
-        <div class="controls-row">
-          <button class="btn btn-secondary btn-sm" onclick="level5Prev()" ${step === 0 ? 'disabled' : ''}>← Previous</button>
-          <button class="btn btn-primary btn-sm" onclick="level5Next()" ${step >= steps.length - 1 ? 'disabled' : ''}>Next →</button>
-        </div>
-      </div>
-
-      ${step === steps.length - 1 ? `
-      <div class="card" style="border-color:var(--green)">
-        <h3 style="color:var(--green)">🧠 The Add/Remove Logic</h3>
-        <div style="margin-top:8px">
-          <p><strong>When ADDING a value v to the window:</strong></p>
-          <ol style="padding-left:20px;margin-top:4px;color:var(--text-dim)">
-            <li>If v ≤ max(Chosen): insert into Chosen, chosenSum += v</li>
-            <li>Else: insert into Rest</li>
-            <li>Rebalance: if |Chosen| > k−1, move max(Chosen) → Rest</li>
-            <li>Rebalance: if |Chosen| < k−1, move min(Rest) → Chosen</li>
-          </ol>
-          <p style="margin-top:12px"><strong>When REMOVING a value v from the window:</strong></p>
-          <ol style="padding-left:20px;margin-top:4px;color:var(--text-dim)">
-            <li>If v is in Chosen: remove from Chosen, chosenSum -= v</li>
-            <li>Else: remove from Rest</li>
-            <li>Rebalance: if |Chosen| < k−1, move min(Rest) → Chosen</li>
-          </ol>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>❓ Final Understanding Check</h3>
-        <p>When we add a new element to the window and it's smaller than max(Chosen), what happens?</p>
-        <button class="quiz-option" onclick="answerLevel5Quiz(0)">A) It goes to Rest because Chosen is full</button>
-        <button class="quiz-option" onclick="answerLevel5Quiz(1)">B) It goes to Chosen, and then max(Chosen) gets moved to Rest to maintain |Chosen| = k−1</button>
-        <button class="quiz-option" onclick="answerLevel5Quiz(2)">C) We rebuild both sets from scratch</button>
-        <div id="l5-fb" class="feedback"></div>
-      </div>
-      ` : ''}
-    `;
-  }
-
-  window.level5Prev = function () { if (step > 0) { step--; draw(); } };
-  window.level5Next = function () { if (step < steps.length - 1) { step++; draw(); } };
-
-  window.answerLevel5Quiz = function(a) {
-    const fb = document.getElementById('l5-fb');
-    container.querySelectorAll('.quiz-option').forEach(b => b.style.pointerEvents = 'none');
-    if (a === 1) {
-      container.querySelectorAll('.quiz-option')[1].classList.add('correct');
-      fb.className = 'feedback show success';
-      fb.textContent = '✅ Exactly! The new small element enters Chosen, pushing out the current max. This maintains the invariant and keeps chosenSum as small as possible.';
-      addXP(100);
-      completeLevel(5);
-    } else {
-      container.querySelectorAll('.quiz-option')[a].classList.add('wrong');
-      container.querySelectorAll('.quiz-option')[1].classList.add('correct');
-      fb.className = 'feedback show error';
-      fb.textContent = '❌ The correct answer is B. The element goes into Chosen (it\'s small enough), and the largest in Chosen is evicted to Rest.';
-      addXP(30);
-      completeLevel(5);
-    }
-    fb.innerHTML += '<div style="margin-top:12px"><button class="btn btn-success" onclick="goToLevel(6)">Continue to Level 6 →</button></div>';
-  };
-
-  draw();
-}
-
-// ===================================================================
-//  LEVEL 6: FULL SOLUTION + INTERACTIVE SANDBOX
-// ===================================================================
-function renderLevel6() {
-  const container = document.getElementById('level-6');
-
-  let sandboxNums = [1, 3, 2, 6, 4, 2];
-  let sandboxK = 3;
-  let sandboxDist = 3;
-  let simStep = -1;
-  let simSteps = [];
-
-  function computeSteps(nums, k, dist) {
-    const n = nums.length;
-    const needed = k - 1; // number of split points to pick
-    const windowSize = dist + 1;
-    const steps = [];
-
-    // We'll use a simple sorted array approach for the simulation
-    // "chosen" holds the needed smallest, "rest" holds the others
-    let chosen = []; // sorted
-    let rest = [];   // sorted
-    let chosenSum = 0;
-    let bestSum = Infinity;
-
-    function insertSorted(arr, val) {
-      let lo = 0, hi = arr.length;
-      while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid] < val) lo = mid + 1; else hi = mid; }
-      arr.splice(lo, 0, val);
-    }
-    function removeSorted(arr, val) {
-      const idx = arr.indexOf(val);
-      if (idx >= 0) arr.splice(idx, 1);
-    }
-
-    function rebalance() {
-      while (chosen.length > needed) {
-        const v = chosen.pop(); // max of chosen
-        chosenSum -= v;
-        insertSorted(rest, v);
-      }
-      while (chosen.length < needed && rest.length > 0) {
-        const v = rest.shift(); // min of rest
-        chosenSum += v;
-        insertSorted(chosen, v);
-      }
-      // swap if needed
-      while (chosen.length > 0 && rest.length > 0 && chosen[chosen.length - 1] > rest[0]) {
-        const fromChosen = chosen.pop();
-        chosenSum -= fromChosen;
-        const fromRest = rest.shift();
-        chosenSum += fromRest;
-        insertSorted(rest, fromChosen);
-        insertSorted(chosen, fromRest);
-      }
-    }
-
-    // Initialize: add elements at indices 1..windowSize (or 1..n-1 if smaller)
-    const initEnd = Math.min(windowSize, n - 1);
-    for (let i = 1; i <= initEnd; i++) {
-      insertSorted(chosen, nums[i]);
-      chosenSum += nums[i];
-    }
-    rebalance();
-
-    bestSum = chosenSum + nums[0];
-    steps.push({
-      type: 'init',
-      windowRange: [1, initEnd],
-      chosen: [...chosen],
-      rest: [...rest],
-      chosenSum,
-      totalCost: chosenSum + nums[0],
-      bestSum,
-      desc: `Initialize window [1..${initEnd}]. Insert all values, pick ${needed} smallest.`
-    });
-
-    // Slide
-    for (let right = initEnd + 1; right < n; right++) {
-      const left = right - windowSize; // element to remove is at index left+1... wait
-      // window should cover [right - windowSize + 1 .. right]
-      const newLeft = right - windowSize + 1;
-      const removeIdx = newLeft - 1;
-
-      // Add new element
-      const addVal = nums[right];
-      if (chosen.length > 0 && addVal <= chosen[chosen.length - 1]) {
-        insertSorted(chosen, addVal);
-        chosenSum += addVal;
-      } else {
-        insertSorted(rest, addVal);
-      }
-
-      // Remove old element
-      const removeVal = nums[removeIdx];
-      if (chosen.includes(removeVal)) {
-        removeSorted(chosen, removeVal);
-        chosenSum -= removeVal;
-      } else {
-        removeSorted(rest, removeVal);
-      }
-
-      rebalance();
-
-      const totalCost = chosenSum + nums[0];
-      if (totalCost < bestSum) bestSum = totalCost;
-
-      steps.push({
-        type: 'slide',
-        windowRange: [newLeft, right],
-        removed: { idx: removeIdx, val: removeVal },
-        added: { idx: right, val: addVal },
-        chosen: [...chosen],
-        rest: [...rest],
-        chosenSum,
-        totalCost,
-        bestSum,
-        desc: `Slide: remove nums[${removeIdx}]=${removeVal}, add nums[${right}]=${addVal}. Window [${newLeft}..${right}].`
-      });
-    }
-
-    return steps;
-  }
-
-  function drawSandbox() {
-    simSteps = computeSteps(sandboxNums, sandboxK, sandboxDist);
-    const finalBest = simSteps.length > 0 ? simSteps[simSteps.length - 1].bestSum : 'N/A';
-
-    const curStep = simStep >= 0 && simStep < simSteps.length ? simSteps[simStep] : null;
-
-    // Array classes
-    const classes = {};
-    if (curStep) {
-      const [wl, wr] = curStep.windowRange;
-      const chosenSet = new Set();
-      const chosenCopy = [...curStep.chosen];
-      for (let i = wl; i <= wr; i++) {
-        const vi = chosenCopy.indexOf(sandboxNums[i]);
-        if (vi >= 0) {
-          chosenSet.add(i);
-          chosenCopy.splice(vi, 1);
-        }
-      }
-      for (let i = 0; i < sandboxNums.length; i++) {
-        if (i === 0) classes[i] = 'sub0';
-        else if (i >= wl && i <= wr) {
-          classes[i] = chosenSet.has(i) ? 'highlight' : 'window';
-        } else {
-          classes[i] = 'fade';
-        }
-      }
-    } else {
-      for (let i = 0; i < sandboxNums.length; i++) {
-        classes[i] = i === 0 ? 'sub0' : '';
-      }
-    }
-
-    container.innerHTML = `
-      <div class="card">
-        <h3>🏆 The Complete Algorithm</h3>
-        <div style="margin-top:8px">
-          <p>Here's the plan we derived step by step:</p>
-          <ol style="padding-left:20px;margin-top:8px;color:var(--text-dim);line-height:1.8">
-            <li><strong>nums[0]</strong> is always part of the cost (the first subarray always starts at 0).</li>
-            <li>We need k−1 more split points from indices 1..n−1.</li>
-            <li>The constraint i<sub>k−1</sub> − i<sub>1</sub> ≤ dist means all split points fit in a window of size dist+1.</li>
-            <li>Slide a window of size dist+1 across indices 1..n−1.</li>
-            <li>Maintain two sorted sets (<strong>Chosen</strong> and <strong>Rest</strong>) for O(log n) updates.</li>
-            <li>Track minimum <code>nums[0] + chosenSum</code> across all window positions.</li>
-          </ol>
-          <p style="margin-top:8px;color:var(--green);font-weight:600">Time: O(n log n) &nbsp;|&nbsp; Space: O(n)</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>💻 Solution Code (Python)</h3>
-        <div class="code-block"><span class="kw">from</span> sortedcontainers <span class="kw">import</span> SortedList
-
-<span class="kw">class</span> <span class="fn">Solution</span>:
-    <span class="kw">def</span> <span class="fn">minimumCost</span>(self, nums, k, dist):
-        n = <span class="fn">len</span>(nums)
-        needed = k - 1          <span class="cm"># split points to pick</span>
-        window = dist + 1       <span class="cm"># max window size</span>
-
-        <span class="cm"># Two SortedLists: chosen (k-1 smallest), rest</span>
-        chosen = SortedList()
-        rest = SortedList()
-        chosen_sum = <span class="num">0</span>
-
-        <span class="cm"># Initialize with first window [1 .. window]</span>
-        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="fn">min</span>(window + <span class="num">1</span>, n)):
-            chosen.add(nums[i])
-            chosen_sum += nums[i]
-
-        <span class="cm"># Rebalance: keep only 'needed' in chosen</span>
-        <span class="kw">while</span> <span class="fn">len</span>(chosen) > needed:
-            v = chosen.pop()     <span class="cm"># remove max</span>
-            chosen_sum -= v
-            rest.add(v)
-
-        best = chosen_sum + nums[<span class="num">0</span>]
-
-        <span class="cm"># Slide the window</span>
-        <span class="kw">for</span> right <span class="kw">in</span> <span class="fn">range</span>(window + <span class="num">1</span>, n):
-            <span class="cm"># Add nums[right]</span>
-            <span class="kw">if</span> chosen <span class="kw">and</span> nums[right] <= chosen[-<span class="num">1</span>]:
-                chosen.add(nums[right])
-                chosen_sum += nums[right]
-            <span class="kw">else</span>:
-                rest.add(nums[right])
-
-            <span class="cm"># Remove nums[right - window]</span>
-            remove_val = nums[right - window]
-            <span class="kw">if</span> remove_val <span class="kw">in</span> chosen:
-                chosen.remove(remove_val)
-                chosen_sum -= remove_val
-            <span class="kw">else</span>:
-                rest.remove(remove_val)
-
-            <span class="cm"># Rebalance</span>
-            <span class="kw">while</span> <span class="fn">len</span>(chosen) < needed <span class="kw">and</span> rest:
-                v = rest.pop(<span class="num">0</span>)
-                chosen.add(v)
-                chosen_sum += v
-            <span class="kw">while</span> <span class="fn">len</span>(chosen) > needed:
-                v = chosen.pop()
-                chosen_sum -= v
-                rest.add(v)
-            <span class="cm"># Fix invariant</span>
-            <span class="kw">while</span> chosen <span class="kw">and</span> rest <span class="kw">and</span> chosen[-<span class="num">1</span>] > rest[<span class="num">0</span>]:
-                big = chosen.pop()
-                chosen_sum -= big
-                small = rest.pop(<span class="num">0</span>)
-                chosen_sum += small
-                chosen.add(small)
-                rest.add(big)
-
-            best = <span class="fn">min</span>(best, chosen_sum + nums[<span class="num">0</span>])
-
-        <span class="kw">return</span> best</div>
-      </div>
-
-      <div class="card">
-        <h3>🎮 Interactive Sandbox</h3>
-        <p style="font-size:.85rem;color:var(--text-dim)">Customize the input and step through the algorithm!</p>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;align-items:end">
-          <div>
-            <label style="font-size:.8rem;color:var(--text-dim)">nums (comma-separated)</label><br>
-            <input id="sb-nums" value="${sandboxNums.join(',')}" style="background:var(--bg);border:1px solid var(--surface2);color:var(--text);padding:6px 10px;border-radius:6px;width:200px;font-size:.9rem">
-          </div>
-          <div>
-            <label style="font-size:.8rem;color:var(--text-dim)">k</label><br>
-            <input id="sb-k" type="number" value="${sandboxK}" min="3" style="background:var(--bg);border:1px solid var(--surface2);color:var(--text);padding:6px 10px;border-radius:6px;width:60px;font-size:.9rem">
-          </div>
-          <div>
-            <label style="font-size:.8rem;color:var(--text-dim)">dist</label><br>
-            <input id="sb-dist" type="number" value="${sandboxDist}" min="1" style="background:var(--bg);border:1px solid var(--surface2);color:var(--text);padding:6px 10px;border-radius:6px;width:60px;font-size:.9rem">
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="sandboxLoad()">Load</button>
-        </div>
-
-        ${renderArray(sandboxNums, { classes })}
-
-        ${curStep ? `
-          <div class="sets-row">
-            <div class="set-box">
-              <h4>✅ Chosen (${curStep.chosen.length})</h4>
-              <div class="set-items">${curStep.chosen.map(v => `<span class="set-item chosen">${v}</span>`).join('')}</div>
-              <div style="text-align:center;margin-top:6px;font-size:.82rem;color:var(--green)">Sum = ${curStep.chosenSum}</div>
-            </div>
-            <div class="set-box">
-              <h4>📦 Rest (${curStep.rest.length})</h4>
-              <div class="set-items">${curStep.rest.map(v => `<span class="set-item rest">${v}</span>`).join('')}</div>
-            </div>
-          </div>
-          <div style="text-align:center;margin-top:8px">
-            <div class="sum-display">Cost = ${sandboxNums[0]} + ${curStep.chosenSum} = ${curStep.totalCost}</div>
-            <div class="best-display">Best = ${curStep.bestSum}</div>
-            <div style="font-size:.85rem;color:var(--text-dim)">${curStep.desc}</div>
-          </div>
-        ` : `
-          <div style="text-align:center;margin-top:16px;color:var(--text-dim)">Press "Step" or "Auto" to start the simulation.</div>
-        `}
-
-        <div class="step-counter">${simStep >= 0 ? `Step ${simStep + 1} / ${simSteps.length}` : 'Ready'}</div>
-        <div class="controls-row">
-          <button class="btn btn-secondary btn-sm" onclick="sandboxPrev()" ${simStep <= 0 ? 'disabled' : ''}>← Prev</button>
-          <button class="btn btn-primary btn-sm" onclick="sandboxNext()" ${simStep >= simSteps.length - 1 ? 'disabled' : ''}>Step →</button>
-          <button class="btn btn-secondary btn-sm" onclick="sandboxAuto()">▶ Auto</button>
-          <button class="btn btn-secondary btn-sm" onclick="sandboxReset()">↺ Reset</button>
-        </div>
-
-        ${simStep === simSteps.length - 1 ? `
-          <div style="text-align:center;margin-top:16px">
-            <div style="font-size:1.3rem;font-weight:700;color:var(--green)">🎉 Answer: ${simSteps[simSteps.length-1].bestSum}</div>
-          </div>
-        ` : ''}
-      </div>
-
-      <div id="l6-complete" style="text-align:center;margin-top:20px;">
-        <button class="btn btn-success" onclick="finishAll()">🏆 Complete the Quest!</button>
-      </div>
-    `;
-  }
-
-  window.sandboxLoad = function() {
-    const numsStr = document.getElementById('sb-nums').value;
-    sandboxNums = numsStr.split(',').map(s => parseInt(s.trim())).filter(v => !isNaN(v));
-    sandboxK = parseInt(document.getElementById('sb-k').value) || 3;
-    sandboxDist = parseInt(document.getElementById('sb-dist').value) || 1;
-    simStep = -1;
-    drawSandbox();
-  };
-
-  window.sandboxPrev = function() { if (simStep > 0) { simStep--; drawSandbox(); } };
-  window.sandboxNext = function() {
-    if (simStep < simSteps.length - 1) { simStep++; drawSandbox(); }
-  };
-  window.sandboxAuto = async function() {
-    simStep = -1;
-    drawSandbox();
-    for (let i = 0; i < simSteps.length; i++) {
-      await new Promise(r => setTimeout(r, 900));
-      simStep = i;
-      drawSandbox();
-    }
-  };
-  window.sandboxReset = function() { simStep = -1; drawSandbox(); };
-
-  window.finishAll = function() {
-    addXP(150);
-    completeLevel(6);
-    shootConfetti();
-    setTimeout(() => {
-      alert('🏆 Congratulations! You\'ve mastered LeetCode 3013!\n\nKey takeaways:\n1. nums[0] is always in the cost\n2. Pick k-1 split points in a sliding window of size dist+1\n3. Use two sorted sets to maintain k-1 smallest efficiently\n4. O(n log n) time complexity');
-    }, 500);
-  };
-
-  drawSandbox();
-}
-
-// ===================================================================
-//  RENDER LEVEL
-// ===================================================================
-function renderLevel(n) {
-  const main = document.getElementById('main-content');
-  const lvl = levels[n - 1];
-
-  main.innerHTML = `
-    <div class="level-container active" id="level-${n}">
-      <div class="level-header">
-        <div class="badge">LEVEL ${n}</div>
-        <h2>${lvl.title}</h2>
-        <p>${lvl.subtitle}</p>
       </div>
     </div>
   `;
+}
 
-  switch(n) {
-    case 1: renderLevel1(); break;
-    case 2: renderLevel2(); break;
-    case 3: renderLevel3(); break;
-    case 4: renderLevel4(); break;
-    case 5: renderLevel5(); break;
-    case 6: renderLevel6(); break;
+// ════════════════════════════════════════════════════════════════════
+//  AZURE OPENAI API CALL
+// ════════════════════════════════════════════════════════════════════
+async function handleGenerate() {
+  const problem = document.getElementById('problem-input').value.trim();
+  const errEl = document.getElementById('landing-error');
+  const btn = document.getElementById('gen-btn');
+
+  errEl.className = 'error-msg';
+  if (!envConfig.endpoint || !envConfig.credential) {
+    errEl.textContent = 'Missing .env config. Add AZURE_INFERENCE_ENDPOINT and AZURE_INFERENCE_CREDENTIAL to your .env file.';
+    errEl.className = 'error-msg show'; return;
+  }
+  if (!problem) { errEl.textContent = 'Please paste a LeetCode problem.'; errEl.className = 'error-msg show'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+  showLoadingOverlay('Analyzing problem & building levels...');
+
+  try {
+    const questData = await callAzureOpenAI(problem);
+    hideLoadingOverlay();
+    startQuest(questData);
+  } catch (e) {
+    hideLoadingOverlay();
+    btn.disabled = false;
+    btn.innerHTML = '✨ Generate Visual Explanation';
+    errEl.textContent = 'Error: ' + (e.message || 'Failed to generate. Check your .env config and try again.');
+    errEl.className = 'error-msg show';
+    console.error(e);
   }
 }
 
-// ===================================================================
-//  CONFETTI
-// ===================================================================
-function shootConfetti() {
-  const canvas = document.getElementById('confetti-canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+function showLoadingOverlay(text) {
+  document.getElementById('loading-overlay')?.remove();
+  const d = document.createElement('div');
+  d.className = 'loading-overlay'; d.id = 'loading-overlay';
+  d.innerHTML = `<div class="big-spinner"></div><p>${text}</p><p class="substep">Using ${escapeHTML(envConfig.model)} — this may take 15-30 seconds...</p>`;
+  document.body.appendChild(d);
+}
+function hideLoadingOverlay() { document.getElementById('loading-overlay')?.remove(); }
 
-  const particles = [];
-  const colors = ['#38bdf8', '#4ade80', '#facc15', '#f472b6', '#818cf8', '#c084fc'];
+async function callAzureOpenAI(problem) {
+  const prompt = buildPrompt(problem);
+  const endpoint = envConfig.endpoint.replace(/\/$/, '');
+  const model = envConfig.model;
+  const apiVersion = '2024-12-01-preview';
+  const url = `${endpoint}/deployments/${model}/chat/completions?api-version=${apiVersion}`;
 
-  for (let i = 0; i < 150; i++) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: -10 - Math.random() * 200,
-      vx: (Math.random() - 0.5) * 6,
-      vy: Math.random() * 4 + 2,
-      size: Math.random() * 6 + 3,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      rot: Math.random() * 360,
-      rotSpeed: (Math.random() - 0.5) * 10,
-      life: 1,
-    });
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': envConfig.credential,
+    },
+    body: JSON.stringify({
+      messages: [
+        { role: 'system', content: 'You are an expert DSA teacher. You MUST respond with valid JSON only — no markdown, no commentary.' },
+        { role: 'user', content: prompt }
+      ],
+      max_completion_tokens: 16000,
+      response_format: { type: 'json_object' },
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Azure API returned ${resp.status}`);
   }
+  const data = await resp.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Empty response from Azure OpenAI');
 
-  let frame = 0;
-  function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    let alive = false;
-    particles.forEach(p => {
-      if (p.life <= 0) return;
-      alive = true;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.1;
-      p.rot += p.rotSpeed;
-      p.life -= 0.008;
+  let parsed;
+  try {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('No JSON');
+    parsed = JSON.parse(m[0]);
+  } catch (e) {
+    console.error('Raw:', text);
+    throw new Error('Failed to parse response. Try again.');
+  }
+  if (!parsed.title || !parsed.levels?.length) throw new Error('Invalid response structure. Try again.');
+  parsed.levels.forEach((l, i) => { if (!Array.isArray(l.sections)) l.sections = []; });
+  return parsed;
+}
 
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot * Math.PI / 180);
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.life;
-      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-      ctx.restore();
-    });
-    if (alive && frame < 300) {
-      frame++;
-      requestAnimationFrame(animate);
-    } else {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+function buildPrompt(problem) {
+  return `You are an expert DSA teacher creating a gamified, visual, step-by-step learning experience for a LeetCode problem. Break it down so the learner derives the solution themselves through progressive "aha moments."
+
+PROBLEM:
+${problem}
+
+TASK: Return a strict JSON object with this structure:
+
+{
+  "title": "Short problem title",
+  "difficulty": "Easy|Medium|Hard",
+  "pattern": "Main algorithmic pattern name",
+  "levels": [ /* 4-6 levels, each with sections */ ]
+}
+
+Each level:
+{
+  "title": "3-5 word title",
+  "subtitle": "What the learner discovers here",
+  "sections": [ /* array of section objects */ ]
+}
+
+SECTION TYPES — use these building blocks:
+
+1. EXPLANATION — teach a concept:
+{
+  "type": "explanation",
+  "title": "Heading",
+  "paragraphs": ["Text paragraph 1 (supports **bold** and \`code\`)", "..."],
+  "keyInsight": "One-line aha moment (optional)"
+}
+
+2. ARRAY_VIS — visualize an array/list with colored highlights:
+{
+  "type": "array_vis",
+  "title": "Title (optional)",
+  "description": "What this shows",
+  "array": [1, 3, 2, 6],
+  "highlights": [
+    {"indices": [0, 2], "color": "green", "label": "Selected"},
+    {"indices": [1], "color": "yellow", "label": "Current"}
+  ],
+  "showIndices": true
+}
+Valid colors: green, blue, yellow, red, purple, pink
+
+3. QUIZ — multiple choice (used to gate progression):
+{
+  "type": "quiz",
+  "question": "Question text?",
+  "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+  "correctIndex": 1,
+  "explanationCorrect": "Why correct",
+  "explanationWrong": "Hint for wrong answer",
+  "xp": 50
+}
+
+4. WALKTHROUGH — animated step-by-step algorithm trace (VERY IMPORTANT):
+{
+  "type": "walkthrough",
+  "title": "Tracing Example 1",
+  "description": "What we are demonstrating",
+  "steps": [
+    {
+      "description": "What happens in this step",
+      "array": [2, 7, 11, 15],
+      "highlights": [{"indices": [0,1], "color": "green", "label": "Pair"}],
+      "variables": {"target": 9, "sum": "2+7=9"},
+      "note": "Optional insight (optional field)"
     }
-  }
-  animate();
+  ]
+}
+IMPORTANT: every step MUST include "array" and "description". Include 4-8 meaningful steps.
+
+5. SETS_VIS — show named groups of data (hash maps, sets, partitions, stacks, queues):
+{
+  "type": "sets_vis",
+  "title": "Hash Map State",
+  "description": "What this represents (optional)",
+  "sets": [
+    {"name": "Map", "items": ["2→0", "7→1"], "color": "green"},
+    {"name": "Looking for", "items": ["7"], "color": "blue"}
+  ]
+}
+Valid colors: green, blue, red, yellow, purple
+
+6. CODE — final solution (use in last level):
+{
+  "type": "code",
+  "title": "Complete Solution",
+  "language": "python",
+  "code": "class Solution:\\n    def solve(self, ...):\\n        ...",
+  "explanation": "Brief line-by-line walkthrough"
 }
 
-// ===================================================================
+7. INTERACTIVE — let user try selecting correct cells:
+{
+  "type": "interactive",
+  "title": "Try it!",
+  "description": "Select the correct elements...",
+  "interactionType": "select_cells",
+  "array": [2, 7, 11, 15],
+  "correctIndices": [0, 1],
+  "successMessage": "Correct! ...",
+  "failMessage": "Not quite. ...",
+  "xp": 75
+}
+
+RULES:
+- Level 1: Understand the problem (explanation + array_vis + interactive or quiz).
+- Level 2-3: Build intuition from brute force → key insight (explanation + walkthrough + quiz).
+- Level 3-5: Show the optimal approach step by step (walkthrough with many steps + sets_vis if relevant).
+- Last level: Full solution code + summary quiz.
+- Include at LEAST 3 quiz sections total.
+- Include at LEAST 1 walkthrough with 5+ steps using ACTUAL example data from the problem.
+- Include at LEAST 1 interactive section.
+- Use **bold** and \`code\` in text for emphasis.
+- For the walkthrough "array" field: always include the full array, don't abbreviate.
+- For intervals/2D problems, flatten or represent as needed in the array field.
+- Ensure ALL JSON is valid. Use \\n for newlines in code strings.
+- Return ONLY the JSON object. No other text.`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  START QUEST
+// ════════════════════════════════════════════════════════════════════
+function startQuest(questData) {
+  state.questData = questData;
+  state.xp = 0;
+  state.currentLevel = 1;
+  state.levelsCompleted = new Set();
+  state.levelsUnlocked = new Set([1]);
+
+  let totalXP = 0;
+  questData.levels.forEach(l => l.sections.forEach(s => {
+    if (s.xp) totalXP += s.xp;
+    else if (s.type === 'quiz') totalXP += 50;
+    else if (s.type === 'interactive') totalXP += 75;
+  }));
+  totalXP += questData.levels.length * 25;
+  state.maxXP = totalXP || 300;
+
+  document.getElementById('xp-section').style.display = 'flex';
+  document.getElementById('back-btn').style.display = 'block';
+  document.getElementById('xp-fill').style.width = '0%';
+  document.getElementById('xp-label').textContent = '0 / ' + state.maxXP + ' XP';
+
+  document.getElementById('app').innerHTML = `
+    <div class="level-nav" id="level-nav"></div>
+    <div class="main" id="main-content"></div>
+  `;
+  renderLevelNav();
+  renderCurrentLevel();
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  RENDER CURRENT LEVEL
+// ════════════════════════════════════════════════════════════════════
+function renderCurrentLevel() {
+  const level = state.questData.levels[state.currentLevel - 1];
+  if (!level) return;
+  const lvl = state.currentLevel;
+  const total = state.questData.levels.length;
+
+  let html = `
+    <div class="fade-in" style="text-align:center;margin-bottom:20px">
+      <div style="display:inline-block;font-size:.72rem;font-weight:700;padding:3px 12px;border-radius:20px;background:var(--accent2);color:white;margin-bottom:6px">
+        LEVEL ${lvl} of ${total}${state.questData.pattern ? ' — ' + escapeHTML(state.questData.pattern) : ''}
+      </div>
+      <h2 style="font-size:1.45rem;margin-bottom:4px">${escapeHTML(level.title)}</h2>
+      <p style="color:var(--text-dim);font-size:.9rem">${escapeHTML(level.subtitle || '')}</p>
+    </div>
+  `;
+
+  level.sections.forEach((sec, si) => {
+    const sid = 's-' + lvl + '-' + si;
+    html += '<div class="fade-in" id="' + sid + '" style="animation-delay:' + (si * 0.08) + 's">';
+    html += renderSection(sec, sid);
+    html += '</div>';
+  });
+
+  html += `
+    <div class="btn-row" style="margin-top:24px">
+      <button class="btn btn-success" onclick="handleLevelComplete(${lvl})">
+        ${lvl < total ? 'Complete Level & Continue →' : '🏆 Finish Quest!'}
+      </button>
+    </div>
+  `;
+
+  document.getElementById('main-content').innerHTML = html;
+
+  // Post-render init
+  level.sections.forEach((sec, si) => {
+    const sid = 's-' + lvl + '-' + si;
+    postInitSection(sec, sid);
+  });
+}
+
+window.handleLevelComplete = function(lvl) {
+  addXP(25);
+  completeLevel(lvl);
+  const total = state.questData.levels.length;
+  if (lvl < total) {
+    state.currentLevel = lvl + 1;
+    renderLevelNav();
+    renderCurrentLevel();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    shootConfetti();
+    document.getElementById('main-content').innerHTML += `
+      <div class="card fade-in" style="text-align:center;border-color:var(--green);margin-top:20px">
+        <h3 style="color:var(--green);font-size:1.4rem">🏆 Quest Complete!</h3>
+        <p style="margin-top:8px">You've mastered <strong>${escapeHTML(state.questData.title)}</strong>!</p>
+        <p style="margin-top:4px">Total XP: <strong style="color:var(--yellow)">${state.xp}</strong></p>
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn btn-primary" onclick="showLanding()">← Try Another Problem</button>
+        </div>
+      </div>
+    `;
+  }
+};
+
+// ════════════════════════════════════════════════════════════════════
+//  SECTION RENDERERS
+// ════════════════════════════════════════════════════════════════════
+function renderSection(s, id) {
+  switch (s.type) {
+    case 'explanation': return renderExplanation(s);
+    case 'array_vis': return renderArrayVis(s);
+    case 'quiz': return renderQuiz(s, id);
+    case 'walkthrough': return renderWalkthrough(s, id);
+    case 'sets_vis': return renderSetsVis(s);
+    case 'code': return renderCode(s);
+    case 'interactive': return renderInteractive(s, id);
+    default: return '<div class="card"><p style="color:var(--text-dim)">Section: ' + escapeHTML(s.type || 'unknown') + '</p></div>';
+  }
+}
+
+function postInitSection(s, id) {
+  if (s.type === 'walkthrough') initWalkthrough(s, id);
+  if (s.type === 'interactive') initInteractive(s, id);
+}
+
+// ─── EXPLANATION ───
+function renderExplanation(s) {
+  let h = '<div class="card"><h3>' + escapeHTML(s.title || '📖 Explanation') + '</h3>';
+  (s.paragraphs || []).forEach(p => h += '<p style="margin-top:8px">' + fmt(p) + '</p>');
+  if (s.keyInsight) h += '<div class="explanation-box" style="margin-top:12px">💡 <strong>Key Insight:</strong> ' + fmt(s.keyInsight) + '</div>';
+  h += '</div>';
+  return h;
+}
+
+// ─── ARRAY VIS ───
+function renderArrayVis(s) {
+  let h = '<div class="card">';
+  if (s.title) h += '<h3>' + escapeHTML(s.title) + '</h3>';
+  if (s.description) h += '<p style="margin-bottom:8px">' + fmt(s.description) + '</p>';
+  h += buildArrayHTML(s.array || [], s.highlights, s.showIndices !== false);
+  if (s.highlights?.length) {
+    h += '<div style="display:flex;gap:12px;justify-content:center;margin-top:8px;flex-wrap:wrap">';
+    s.highlights.forEach(hl => {
+      h += '<span style="font-size:.76rem;color:var(--text-dim)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;border:2px solid var(--' + colorToVar(hl.color) + ');vertical-align:middle;margin-right:3px"></span>' + escapeHTML(hl.label || '') + '</span>';
+    });
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+// ─── QUIZ ───
+function renderQuiz(s, id) {
+  let h = '<div class="card"><h3>❓ Quiz</h3>';
+  h += '<p style="margin-bottom:10px">' + fmt(s.question) + '</p>';
+  (s.options || []).forEach((opt, i) => {
+    h += '<button class="quiz-option" data-sid="' + id + '" data-oi="' + i + '">' + fmt(opt) + '</button>';
+  });
+  h += '<div class="feedback" id="fb-' + id + '"></div></div>';
+
+  // Attach after render via event delegation (handled in postInit isn't needed; use onclick below)
+  // We'll use a global click handler approach
+  setTimeout(() => {
+    document.querySelectorAll('[data-sid="' + id + '"]').forEach(btn => {
+      btn.addEventListener('click', function handler() {
+        const oi = parseInt(this.dataset.oi);
+        handleQuizClick(id, oi, s);
+      }, { once: true });
+    });
+  }, 50);
+
+  return h;
+}
+
+function handleQuizClick(id, chosen, s) {
+  const correct = s.correctIndex ?? 0;
+  const btns = document.querySelectorAll('[data-sid="' + id + '"]');
+  btns.forEach((b, i) => {
+    if (i === correct) b.classList.add('correct');
+    else if (i === chosen && chosen !== correct) b.classList.add('wrong');
+    b.style.pointerEvents = 'none';
+  });
+  const fb = document.getElementById('fb-' + id);
+  if (chosen === correct) {
+    fb.className = 'feedback show success';
+    fb.textContent = '✅ ' + (s.explanationCorrect || 'Correct!');
+    addXP(s.xp || 50);
+  } else {
+    fb.className = 'feedback show error';
+    fb.textContent = '❌ ' + (s.explanationWrong || 'Not quite. The correct answer is highlighted above.');
+  }
+}
+
+// ─── WALKTHROUGH ───
+function renderWalkthrough(s, id) {
+  let h = '<div class="card"><h3>🔄 ' + escapeHTML(s.title || 'Step-by-Step Walkthrough') + '</h3>';
+  if (s.description) h += '<p style="margin-bottom:8px">' + fmt(s.description) + '</p>';
+  h += '<div id="wt-' + id + '"></div></div>';
+  return h;
+}
+
+function initWalkthrough(s, id) {
+  const steps = s.steps;
+  if (!steps?.length) return;
+  let cur = 0, timer = null;
+
+  function render() {
+    const el = document.getElementById('wt-' + id);
+    if (!el) return;
+    const step = steps[cur];
+    let h = '<div class="step-counter">Step ' + (cur + 1) + ' / ' + steps.length + '</div>';
+    h += '<div class="progress-track"><div class="progress-fill" style="width:' + ((cur + 1) / steps.length * 100) + '%"></div></div>';
+
+    if (step.array) h += buildArrayHTML(step.array, step.highlights, true);
+
+    if (step.variables && Object.keys(step.variables).length) {
+      h += '<div class="step-display"><div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">';
+      for (const [k, v] of Object.entries(step.variables)) {
+        h += '<div><span class="label">' + escapeHTML(k) + '</span><br><span class="val">' + escapeHTML(String(v)) + '</span></div>';
+      }
+      h += '</div></div>';
+    }
+
+    h += '<div class="explanation-box">' + fmt(step.description) + '</div>';
+    if (step.note) h += '<div style="margin-top:6px;font-size:.8rem;color:var(--accent3)">💡 ' + fmt(step.note) + '</div>';
+
+    h += '<div class="step-controls">';
+    h += '<button class="btn btn-secondary btn-sm" onclick="wtNav(\'' + id + '\',-1)"' + (cur <= 0 ? ' disabled' : '') + '>← Prev</button>';
+    h += '<button class="btn btn-primary btn-sm" onclick="wtNav(\'' + id + '\',1)"' + (cur >= steps.length - 1 ? ' disabled' : '') + '>Next →</button>';
+    h += '<button class="btn btn-secondary btn-sm" onclick="wtAuto(\'' + id + '\')">▶ Auto</button>';
+    h += '<button class="btn btn-secondary btn-sm" onclick="wtNav(\'' + id + '\',0)">↺</button>';
+    h += '</div>';
+    el.innerHTML = h;
+  }
+
+  const key = '__wt_' + id;
+  window[key] = { cur: 0, steps, render, timer: null };
+
+  render();
+}
+
+window.wtNav = function(id, dir) {
+  const w = window['__wt_' + id]; if (!w) return;
+  if (w.timer) { clearInterval(w.timer); w.timer = null; }
+  if (dir === 0) w.cur = 0;
+  else if (dir === -1 && w.cur > 0) w.cur--;
+  else if (dir === 1 && w.cur < w.steps.length - 1) w.cur++;
+  // sync closure
+  const renderFn = w.render;
+  // We need to update the closure's cur... use a trick
+  // Actually, let's refactor so render reads from w.cur
+  const el = document.getElementById('wt-' + id);
+  if (!el) return;
+  renderWalkthroughStep(w, id);
+};
+
+window.wtAuto = function(id) {
+  const w = window['__wt_' + id]; if (!w) return;
+  if (w.timer) { clearInterval(w.timer); w.timer = null; return; }
+  w.timer = setInterval(() => {
+    if (w.cur >= w.steps.length - 1) { clearInterval(w.timer); w.timer = null; return; }
+    w.cur++;
+    renderWalkthroughStep(w, id);
+  }, 1200);
+};
+
+function renderWalkthroughStep(w, id) {
+  const el = document.getElementById('wt-' + id);
+  if (!el) return;
+  const step = w.steps[w.cur];
+  let h = '<div class="step-counter">Step ' + (w.cur + 1) + ' / ' + w.steps.length + '</div>';
+  h += '<div class="progress-track"><div class="progress-fill" style="width:' + ((w.cur + 1) / w.steps.length * 100) + '%"></div></div>';
+
+  if (step.array) h += buildArrayHTML(step.array, step.highlights, true);
+
+  if (step.variables && Object.keys(step.variables).length) {
+    h += '<div class="step-display"><div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">';
+    for (const [k, v] of Object.entries(step.variables)) {
+      h += '<div><span class="label">' + escapeHTML(k) + '</span><br><span class="val">' + escapeHTML(String(v)) + '</span></div>';
+    }
+    h += '</div></div>';
+  }
+
+  h += '<div class="explanation-box">' + fmt(step.description) + '</div>';
+  if (step.note) h += '<div style="margin-top:6px;font-size:.8rem;color:var(--accent3)">💡 ' + fmt(step.note) + '</div>';
+
+  h += '<div class="step-controls">';
+  h += '<button class="btn btn-secondary btn-sm" onclick="wtNav(\'' + id + '\',-1)"' + (w.cur <= 0 ? ' disabled' : '') + '>← Prev</button>';
+  h += '<button class="btn btn-primary btn-sm" onclick="wtNav(\'' + id + '\',1)"' + (w.cur >= w.steps.length - 1 ? ' disabled' : '') + '>Next →</button>';
+  h += '<button class="btn btn-secondary btn-sm" onclick="wtAuto(\'' + id + '\')">▶ Auto</button>';
+  h += '<button class="btn btn-secondary btn-sm" onclick="wtNav(\'' + id + '\',0)">↺</button>';
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+// ─── SETS VIS ───
+function renderSetsVis(s) {
+  let h = '<div class="card">';
+  if (s.title) h += '<h3>' + escapeHTML(s.title) + '</h3>';
+  if (s.description) h += '<p style="margin-bottom:8px">' + fmt(s.description) + '</p>';
+  h += '<div class="sets-row">';
+  (s.sets || []).forEach(set => {
+    h += '<div class="set-box"><h4>' + escapeHTML(set.name) + '</h4><div class="set-items">';
+    (set.items || []).forEach(item => {
+      h += '<span class="set-item ' + (set.color || 'blue') + '">' + escapeHTML(String(item)) + '</span>';
+    });
+    h += '</div></div>';
+  });
+  h += '</div></div>';
+  return h;
+}
+
+// ─── CODE ───
+function renderCode(s) {
+  const cid = 'code-' + Math.random().toString(36).slice(2, 8);
+  let h = '<div class="card"><h3>💻 ' + escapeHTML(s.title || 'Solution Code') + '</h3>';
+  if (s.explanation) h += '<p style="margin-bottom:8px">' + fmt(s.explanation) + '</p>';
+  h += '<button class="btn btn-secondary btn-sm" id="reveal-' + cid + '" onclick="document.getElementById(\'' + cid + '\').style.display=\'block\';this.style.display=\'none\'">👁 Reveal Code</button>';
+  h += '<div class="code-block" id="' + cid + '" style="display:none">' + escapeHTML(s.code || '') + '</div>';
+  h += '</div>';
+  return h;
+}
+
+// ─── INTERACTIVE ───
+function renderInteractive(s, id) {
+  let h = '<div class="card"><h3>🎮 ' + escapeHTML(s.title || 'Try It!') + '</h3>';
+  if (s.description || s.goal) h += '<p style="margin-bottom:8px">' + fmt(s.description || s.goal || '') + '</p>';
+  h += '<div id="int-' + id + '"></div></div>';
+  return h;
+}
+
+function initInteractive(s, id) {
+  if (s.interactionType !== 'select_cells' || !s.array) return;
+  const container = document.getElementById('int-' + id);
+  if (!container) return;
+  const selected = new Set();
+  const correctSet = new Set(s.correctIndices || []);
+
+  function render() {
+    const hl = [{ indices: Array.from(selected), color: 'blue', label: 'Selected' }];
+    let h = buildArrayHTML(s.array, hl, true, true);
+    h += '<div class="feedback" id="intfb-' + id + '"></div>';
+    h += '<div class="btn-row"><button class="btn btn-secondary btn-sm" onclick="intReset(\'' + id + '\')">Reset</button>';
+    h += '<button class="btn btn-primary btn-sm" onclick="intCheck(\'' + id + '\')">Check ✓</button></div>';
+    container.innerHTML = h;
+
+    container.querySelectorAll('.arr-cell').forEach(cell => {
+      cell.classList.add('clickable');
+      cell.addEventListener('click', () => {
+        const idx = parseInt(cell.dataset.idx);
+        if (selected.has(idx)) selected.delete(idx); else selected.add(idx);
+        render();
+      });
+    });
+  }
+
+  window['__int_' + id] = { selected, correctSet, section: s, render };
+  render();
+}
+
+window.intReset = function(id) { const d = window['__int_' + id]; if (d) { d.selected.clear(); d.render(); } };
+window.intCheck = function(id) {
+  const d = window['__int_' + id]; if (!d) return;
+  const fb = document.getElementById('intfb-' + id);
+  const sa = Array.from(d.selected).sort((a,b)=>a-b);
+  const ca = Array.from(d.correctSet).sort((a,b)=>a-b);
+  const ok = sa.length === ca.length && sa.every((v,i) => v === ca[i]);
+  if (ok) {
+    fb.className = 'feedback show success';
+    fb.textContent = '✅ ' + (d.section.successMessage || 'Correct!');
+    addXP(d.section.xp || 75);
+  } else {
+    fb.className = 'feedback show error';
+    fb.textContent = '❌ ' + (d.section.failMessage || 'Not quite. Try again!');
+  }
+};
+
+// ════════════════════════════════════════════════════════════════════
+//  BUILDING BLOCKS
+// ════════════════════════════════════════════════════════════════════
+function buildArrayHTML(arr, highlights, showIdx, clickable) {
+  if (!arr?.length) return '';
+  const cm = {};
+  (highlights || []).forEach(hl => {
+    (hl.indices || []).forEach(i => { if (i >= 0 && i < arr.length) cm[i] = hl.color || 'blue'; });
+  });
+  let h = '<div class="array-vis">';
+  arr.forEach((v, i) => {
+    const cc = cm[i] ? ' highlight-' + cm[i] : '';
+    const ck = clickable ? ' clickable' : '';
+    h += '<div class="arr-cell' + cc + ck + '" data-idx="' + i + '">' + escapeHTML(String(v));
+    if (showIdx) h += '<span class="idx">' + i + '</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+function colorToVar(c) {
+  return { green:'green', blue:'accent', yellow:'yellow', red:'red', purple:'accent2', pink:'accent3' }[c] || 'accent';
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fmt(s) {
+  let o = escapeHTML(s);
+  o = o.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  o = o.replace(/`(.*?)`/g, '<code>$1</code>');
+  o = o.replace(/\n/g, '<br>');
+  return o;
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  CONFETTI
+// ════════════════════════════════════════════════════════════════════
+function shootConfetti() {
+  const c = document.getElementById('confetti-canvas');
+  const ctx = c.getContext('2d');
+  c.width = innerWidth; c.height = innerHeight;
+  const ps = [], cols = ['#38bdf8','#4ade80','#facc15','#f472b6','#818cf8','#c084fc'];
+  for (let i = 0; i < 150; i++) ps.push({
+    x: Math.random()*c.width, y: -10-Math.random()*200,
+    vx: (Math.random()-.5)*6, vy: Math.random()*4+2,
+    sz: Math.random()*6+3, co: cols[~~(Math.random()*cols.length)],
+    r: Math.random()*360, rs: (Math.random()-.5)*10, l: 1,
+  });
+  let f = 0;
+  (function go() {
+    ctx.clearRect(0,0,c.width,c.height);
+    let alive = false;
+    ps.forEach(p => {
+      if (p.l <= 0) return; alive = true;
+      p.x += p.vx; p.y += p.vy; p.vy += .1; p.r += p.rs; p.l -= .008;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r*Math.PI/180);
+      ctx.fillStyle = p.co; ctx.globalAlpha = p.l;
+      ctx.fillRect(-p.sz/2,-p.sz/2,p.sz,p.sz*.6); ctx.restore();
+    });
+    if (alive && f++ < 300) requestAnimationFrame(go);
+    else ctx.clearRect(0,0,c.width,c.height);
+  })();
+}
+
+// ════════════════════════════════════════════════════════════════════
 //  INIT
-// ===================================================================
-renderLevelNav();
-renderLevel(1);
+// ════════════════════════════════════════════════════════════════════
+(async () => {
+  await loadEnv();
+  showLanding();
+})();
 </script>
 </body>
 </html>
