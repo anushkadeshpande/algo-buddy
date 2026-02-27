@@ -133,7 +133,7 @@ export default function Home() {
 
       {/* ═══ TOP BAR ═══ */}
       <div className="topbar">
-        <h1>🎮 DSA Quest</h1>
+        <h1>🎮 Algo Buddy</h1>
         <div className="right">
           {showQuest && (
             <>
@@ -157,7 +157,7 @@ export default function Home() {
       {!showQuest && (
         <div className="landing fade-in">
           <h2>
-            🧩 <span>DSA Quest</span>
+            🧩 <span>Algo Buddy</span>
           </h2>
           <p className="tagline">
             Paste any LeetCode problem → Get a gamified, visual, step-by-step explanation
