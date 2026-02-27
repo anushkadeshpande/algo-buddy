@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA Quest — Gamified LeetCode Explainer</title>
+  <style>
+    /* ===== VARIABLES ===== */
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --accent3: #f472b6;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #facc15;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+      --radius: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; overflow-x: hidden;
+    }
+    a { color: var(--accent); }
+
+    /* ===== TOP BAR ===== */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px; background: var(--surface);
+      border-bottom: 1px solid var(--surface2);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar h1 { font-size: 1.15rem; color: var(--accent); white-space: nowrap; }
+    .topbar .right { display: flex; align-items: center; gap: 14px; }
+    .topbar .xp-bar { display: flex; align-items: center; gap: 8px; }
+    .topbar .xp-track { width: 160px; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+    .topbar .xp-fill { height:100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); transition: width .5s; }
+    .topbar .xp-label { font-size:.8rem; color:var(--text-dim); }
+    .topbar .back-btn {
+      background: var(--surface2); border: none; color: var(--text-dim);
+      padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: .82rem;
+    }
+    .topbar .back-btn:hover { color: var(--text); }
+
+    /* ===== LEVEL NAV ===== */
+    .level-nav { display:flex; justify-content:center; gap:7px; padding:16px; flex-wrap:wrap; }
+    .level-btn {
+      width:40px; height:40px; border-radius:50%; border:2px solid var(--surface2);
+      background: var(--surface); color: var(--text-dim); font-weight:700;
+      cursor:pointer; transition: all .2s; display:flex; align-items:center;
+      justify-content:center; font-size:.9rem;
+    }
+    .level-btn.unlocked { border-color:var(--accent); color:var(--accent); }
+    .level-btn.active { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+    .level-btn.completed { background:var(--green); color:var(--bg); border-color:var(--green); }
+    .level-btn:not(.unlocked):not(.active):not(.completed) { opacity:.4; cursor:not-allowed; }
+
+    /* ===== MAIN ===== */
+    .main { max-width:900px; margin:0 auto; padding:20px 20px 80px; }
+
+    /* ===== LANDING PAGE ===== */
+    .landing { max-width: 700px; margin: 0 auto; padding: 60px 20px; text-align: center; }
+    .landing h2 { font-size: 2rem; margin-bottom: 8px; }
+    .landing h2 span { color: var(--accent); }
+    .landing .tagline { color: var(--text-dim); font-size: 1.05rem; margin-bottom: 36px; }
+
+    .input-group { text-align: left; margin-bottom: 20px; }
+    .input-group label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom: 6px; font-weight: 600; }
+    .input-group input, .input-group textarea, .input-group select {
+      width: 100%; padding: 10px 14px; border-radius: 8px;
+      border: 1px solid var(--surface2); background: var(--surface);
+      color: var(--text); font-size: .92rem; font-family: inherit;
+      transition: border-color .2s;
+    }
+    .input-group input:focus, .input-group textarea:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .input-group textarea { min-height: 200px; resize: vertical; line-height: 1.55; }
+    .input-group .hint { font-size: .78rem; color: var(--text-dim); margin-top: 4px; }
+
+    .generate-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 36px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: var(--bg); font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+      margin-top: 10px;
+    }
+    .generate-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(56,189,248,.25); }
+    .generate-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid transparent;
+      border-top-color: var(--bg); border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg { background: rgba(248,113,113,.12); border: 1px solid var(--red);
+      color: var(--red); padding: 10px 14px; border-radius: 8px;
+      margin-top: 14px; font-size: .88rem; text-align: left; display: none; }
+    .error-msg.show { display: block; }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 22px; margin-bottom: 18px; border: 1px solid var(--surface2);
+    }
+    .card h3 { color: var(--accent); margin-bottom: 10px; font-size: 1.05rem; }
+    .card p, .card li { line-height: 1.65; color: var(--text-dim); }
+    .card ul, .card ol { padding-left: 20px; }
+    .card li { margin-bottom: 4px; }
+    .card strong { color: var(--text); }
+    .card code {
+      background: var(--bg); padding: 2px 6px; border-radius: 4px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: .85em;
+    }
+
+    /* ===== ARRAY VIS ===== */
+    .array-vis { display:flex; gap:4px; justify-content:center; flex-wrap:wrap; margin:14px 0; }
+    .arr-cell {
+      min-width:46px; height:46px; display:flex; align-items:center; justify-content:center;
+      padding: 0 6px;
+      background:var(--surface2); border-radius:8px; font-weight:700; font-size:.9rem;
+      position:relative; transition:all .25s; cursor:default; border:2px solid transparent;
+    }
+    .arr-cell .idx { position:absolute; bottom:-17px; font-size:.62rem; color:var(--text-dim); }
+    .arr-cell.highlight-green { border-color:var(--green); background:rgba(74,222,128,.12); }
+    .arr-cell.highlight-blue { border-color:var(--accent); background:rgba(56,189,248,.15); }
+    .arr-cell.highlight-yellow { border-color:var(--yellow); background:rgba(250,204,21,.12); }
+    .arr-cell.highlight-red { border-color:var(--red); background:rgba(248,113,113,.12); }
+    .arr-cell.highlight-purple { border-color:var(--accent2); background:rgba(129,140,248,.10); }
+    .arr-cell.highlight-pink { border-color:var(--accent3); background:rgba(244,114,182,.12); }
+    .arr-cell.fade { opacity:.3; }
+    .arr-cell.clickable { cursor:pointer; }
+    .arr-cell.clickable:hover { transform:scale(1.1); border-color:var(--accent); }
+
+    /* ===== QUIZ ===== */
+    .quiz-option {
+      display:block; width:100%; text-align:left;
+      padding:11px 15px; margin:7px 0; border-radius:8px;
+      background:var(--surface2); border:2px solid transparent;
+      color:var(--text); cursor:pointer; font-size:.9rem; transition:all .15s;
+    }
+    .quiz-option:hover:not(.correct):not(.wrong) { border-color:var(--accent); }
+    .quiz-option.correct { border-color:var(--green); background:rgba(74,222,128,.15); cursor:default; }
+    .quiz-option.wrong { border-color:var(--red); background:rgba(248,113,113,.12); cursor:default; }
+
+    .feedback {
+      padding:11px 15px; border-radius:8px; margin-top:10px;
+      font-size:.88rem; display:none;
+    }
+    .feedback.show { display:block; animation:fadeIn .3s; }
+    .feedback.success { background:rgba(74,222,128,.12); border:1px solid var(--green); color:var(--green); }
+    .feedback.error { background:rgba(248,113,113,.12); border:1px solid var(--red); color:var(--red); }
+    .feedback.info { background:rgba(56,189,248,.10); border:1px solid var(--accent); color:var(--accent); }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:9px 20px; border-radius:8px; border:none;
+      font-weight:600; font-size:.88rem; cursor:pointer; transition:all .15s;
+    }
+    .btn-primary { background:var(--accent); color:var(--bg); }
+    .btn-primary:hover { background:#7dd3fc; }
+    .btn-secondary { background:var(--surface2); color:var(--text); }
+    .btn-secondary:hover { background:#475569; }
+    .btn-success { background:var(--green); color:var(--bg); }
+    .btn-success:hover { background:#86efac; }
+    .btn-sm { padding:6px 13px; font-size:.82rem; }
+    .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center; }
+
+    /* ===== STEP VIS ===== */
+    .step-display {
+      text-align:center; margin:10px 0; padding:14px;
+      background:var(--bg); border-radius:8px; border:1px solid var(--surface2);
+    }
+    .step-display .val { font-size:1.15rem; font-weight:700; color:var(--yellow); }
+    .step-display .label { font-size:.8rem; color:var(--text-dim); margin-top:2px; }
+    .step-controls { display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+
+    /* ===== CODE ===== */
+    .code-block {
+      background:#0d1117; border-radius:8px; padding:16px 20px;
+      font-family: 'Cascadia Code','Fira Code',monospace; font-size:.82rem;
+      line-height:1.7; overflow-x:auto; color:#c9d1d9; margin:10px 0;
+      border:1px solid #21262d; white-space: pre-wrap;
+    }
+
+    /* ===== EXPLANATION BOX ===== */
+    .explanation-box {
+      background:rgba(129,140,248,.08); border:1px solid rgba(129,140,248,.25);
+      border-radius:8px; padding:12px 16px; margin-top:10px;
+      color:var(--accent2); font-size:.88rem; line-height:1.6;
+    }
+
+    /* ===== ANIMATION ===== */
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .fade-in { animation:fadeIn .4s ease; }
+    .pop { animation: pop .35s ease; }
+    @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+
+    /* ===== CONFETTI ===== */
+    #confetti-canvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; }
+
+    /* ===== LOADING OVERLAY ===== */
+    .loading-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,.88);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200; gap: 16px;
+    }
+    .loading-overlay .big-spinner {
+      width: 48px; height: 48px; border: 3px solid var(--surface2);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    .loading-overlay p { color: var(--text-dim); font-size: .95rem; max-width: 400px; text-align: center; }
+    .loading-overlay .substep { color: var(--accent); font-size: .85rem; margin-top: -8px; }
+
+    /* ===== SETS ===== */
+    .sets-row { display:flex; gap:16px; justify-content:center; margin:14px 0; flex-wrap:wrap; }
+    .set-box {
+      flex:1; min-width:170px; max-width:320px;
+      background:var(--bg); border-radius:var(--radius); padding:14px;
+      border:1px solid var(--surface2);
+    }
+    .set-box h4 { font-size:.82rem; color:var(--text-dim); margin-bottom:8px; text-align:center; }
+    .set-box .set-items { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; min-height:34px; }
+    .set-item { padding:3px 9px; border-radius:5px; font-weight:600; font-size:.82rem; }
+    .set-item.green { background:rgba(74,222,128,.18); color:var(--green); border:1px solid var(--green); }
+    .set-item.red { background:rgba(248,113,113,.12); color:var(--red); border:1px solid rgba(248,113,113,.3); }
+    .set-item.blue { background:rgba(56,189,248,.15); color:var(--accent); border:1px solid var(--accent); }
+    .set-item.yellow { background:rgba(250,204,21,.12); color:var(--yellow); border:1px solid var(--yellow); }
+    .set-item.purple { background:rgba(129,140,248,.12); color:var(--accent2); border:1px solid var(--accent2); }
+
+    /* ===== SAMPLES ===== */
+    .samples-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px; margin-top: 20px;
+    }
+    .sample-card {
+      background: var(--surface); border: 1px solid var(--surface2);
+      border-radius: var(--radius); padding: 16px; cursor: pointer;
+      transition: all .2s; text-align: left;
+    }
+    .sample-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .sample-card h4 { font-size: .95rem; margin-bottom: 4px; }
+    .sample-card p { font-size: .8rem; color: var(--text-dim); }
+    .sample-card .tag {
+      display: inline-block; font-size: .7rem; padding: 2px 8px;
+      border-radius: 10px; margin-top: 6px; font-weight: 600;
+    }
+    .tag-easy { background: rgba(74,222,128,.15); color: var(--green); }
+    .tag-medium { background: rgba(250,204,21,.12); color: var(--yellow); }
+    .tag-hard { background: rgba(248,113,113,.12); color: var(--red); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width:640px) {
+      .topbar { padding:10px 14px; flex-wrap:wrap; gap:8px; }
+      .main { padding:12px 10px 40px; }
+      .arr-cell { min-width:36px; height:36px; font-size:.8rem; }
+      .landing { padding: 30px 14px; }
+      .landing h2 { font-size: 1.5rem; }
+    }
+
+    /* ===== Progress bar inside card ===== */
+    .progress-track {
+      width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin: 8px 0;
+    }
+    .progress-fill {
+      height: 100%; background: var(--green); border-radius: 3px; transition: width .4s;
+    }
+    .step-counter {
+      text-align: center; font-size: .82rem; color: var(--text-dim); margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ============ TOP BAR ============ -->
+<div class="topbar">
+  <h1>🎮 DSA Quest</h1>
+  <div class="right">
+    <div class="xp-bar" id="xp-section" style="display:none">
+      <span class="xp-label" id="xp-label">0 XP</span>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    </div>
+    <button class="back-btn" id="back-btn" style="display:none" onclick="showLanding()">← New Problem</button>
+  </div>
+</div>
+
+<!-- ============ APP ROOT ============ -->
+<div id="app"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  GLOBALS
+// ════════════════════════════════════════════════════════════════════
+let state = {
+  xp: 0, maxXP: 100,
+  currentLevel: 1,
+  levelsCompleted: new Set(),
+  levelsUnlocked: new Set([1]),
+  questData: null,
+};
+
+// Azure OpenAI config (loaded from .env)
+let envConfig = {
+  endpoint: '',
+  credential: '',
+  model: 'gpt-4o',
+};
+
+async function loadEnv() {
+  try {
+    const resp = await fetch('.env');
+    if (!resp.ok) throw new Error('.env not found');
+    const text = await resp.text();
+    text.split('\n').forEach(line => {
+      line = line.trim();
+      if (!line || line.startsWith('#')) return;
+      const eq = line.indexOf('=');
+      if (eq < 0) return;
+      const key = line.slice(0, eq).trim();
+      const val = line.slice(eq + 1).trim();
+      if (key === 'AZURE_INFERENCE_ENDPOINT') envConfig.endpoint = val;
+      if (key === 'AZURE_INFERENCE_CREDENTIAL') envConfig.credential = val;
+      if (key === 'LLM_MODEL') envConfig.model = val;
+    });
+  } catch (e) {
+    console.error('Failed to load .env:', e);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  XP SYSTEM
+// ════════════════════════════════════════════════════════════════════
+function addXP(n) {
+  state.xp = Math.min(state.xp + n, state.maxXP);
+  const pct = state.maxXP > 0 ? (state.xp / state.maxXP * 100) : 0;
+  document.getElementById('xp-fill').style.width = pct + '%';
+  document.getElementById('xp-label').textContent = state.xp + ' / ' + state.maxXP + ' XP';
+}
+
+function completeLevel(lvl) {
+  if (state.levelsCompleted.has(lvl)) return;
+  state.levelsCompleted.add(lvl);
+  const total = state.questData ? state.questData.levels.length : 1;
+  if (lvl < total) state.levelsUnlocked.add(lvl + 1);
+  renderLevelNav();
+  if (state.levelsCompleted.size === total) shootConfetti();
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  LEVEL NAV
+// ════════════════════════════════════════════════════════════════════
+function renderLevelNav() {
+  const nav = document.getElementById('level-nav');
+  if (!nav || !state.questData) return;
+  nav.innerHTML = '';
+  state.questData.levels.forEach((_, i) => {
+    const n = i + 1;
+    const btn = document.createElement('button');
+    btn.className = 'level-btn';
+    btn.textContent = n;
+    if (state.levelsCompleted.has(n)) btn.classList.add('completed');
+    else if (n === state.currentLevel) btn.classList.add('active');
+    else if (state.levelsUnlocked.has(n)) btn.classList.add('unlocked');
+    btn.onclick = () => {
+      if (state.levelsUnlocked.has(n)) {
+        state.currentLevel = n;
+        renderLevelNav();
+        renderCurrentLevel();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+    nav.appendChild(btn);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  LANDING PAGE
+// ════════════════════════════════════════════════════════════════════
+const SAMPLE_TWO_SUM = `1. Two Sum\nGiven an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\nYou can return the answer in any order.\n\nExample 1:\nInput: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].\n\nExample 2:\nInput: nums = [3,2,4], target = 6\nOutput: [1,2]\n\nConstraints:\n2 <= nums.length <= 10^4\n-10^9 <= nums[i] <= 10^9\nOnly one valid answer exists.`;
+
+const SAMPLE_SLIDING_WINDOW = `239. Sliding Window Maximum\nYou are given an array of integers nums, there is a sliding window of size k which is moving from the very left of the array to the very right. You can only see the k numbers in the window. Each time the sliding window moves right by one position.\nReturn the max sliding window.\n\nExample 1:\nInput: nums = [1,3,-1,-3,5,3,6,7], k = 3\nOutput: [3,3,5,5,6,7]\n\nConstraints:\n1 <= nums.length <= 10^5\n-10^4 <= nums[i] <= 10^4\n1 <= k <= nums.length`;
+
+const SAMPLE_MERGE = `56. Merge Intervals\nGiven an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals, and return an array of the non-overlapping intervals that cover all the intervals in the input.\n\nExample 1:\nInput: intervals = [[1,3],[2,6],[8,10],[15,18]]\nOutput: [[1,6],[8,10],[15,18]]\nExplanation: Since intervals [1,3] and [2,6] overlap, merge them into [1,6].\n\nConstraints:\n1 <= intervals.length <= 10^4\nintervals[i].length == 2\n0 <= starti <= endi <= 10^4`;
+
+function showLanding() {
+  state.questData = null;
+  state.xp = 0; state.maxXP = 100;
+  state.currentLevel = 1;
+  state.levelsCompleted = new Set();
+  state.levelsUnlocked = new Set([1]);
+  document.getElementById('xp-section').style.display = 'none';
+  document.getElementById('back-btn').style.display = 'none';
+  document.getElementById('xp-fill').style.width = '0%';
+  document.getElementById('xp-label').textContent = '0 XP';
+
+  document.getElementById('app').innerHTML = `
+    <div class="landing fade-in">
+      <h2>🧩 <span>DSA Quest</span></h2>
+      <p class="tagline">Paste any LeetCode problem → Get a gamified, visual, step-by-step explanation</p>
+
+      <div id="env-status" style="margin-bottom:20px;padding:10px 14px;border-radius:8px;font-size:.85rem;${
+        envConfig.endpoint && envConfig.credential
+          ? 'background:rgba(74,222,128,.1);border:1px solid var(--green);color:var(--green)'
+          : 'background:rgba(248,113,113,.1);border:1px solid var(--red);color:var(--red)'
+      }">${
+        envConfig.endpoint && envConfig.credential
+          ? '✅ Azure OpenAI connected — Model: <strong>' + escapeHTML(envConfig.model) + '</strong>'
+          : '❌ Missing .env config. Create a <code>.env</code> file with AZURE_INFERENCE_ENDPOINT and AZURE_INFERENCE_CREDENTIAL. See <code>.env.example</code>.'
+      }</div>
+
+      <div class="input-group">
+        <label>📝 LeetCode Problem</label>
+        <textarea id="problem-input" placeholder="Paste the full problem description here, including examples and constraints..."></textarea>
+      </div>
+
+      <button class="generate-btn" id="gen-btn" onclick="handleGenerate()">
+        ✨ Generate Visual Explanation
+      </button>
+
+      <div class="error-msg" id="landing-error"></div>
+
+      <div style="margin-top:40px;text-align:left">
+        <p style="color:var(--text-dim);font-size:.88rem;margin-bottom:10px;">Or try a sample problem:</p>
+        <div class="samples-grid">
+          <div class="sample-card" onclick="document.getElementById('problem-input').value=SAMPLE_TWO_SUM">
+            <h4>#1. Two Sum</h4>
+            <p>Find two numbers that add to target</p>
+            <span class="tag tag-easy">Easy</span>
+          </div>
+          <div class="sample-card" onclick="document.getElementById('problem-input').value=SAMPLE_SLIDING_WINDOW">
+            <h4>#239. Sliding Window Maximum</h4>
+            <p>Maximum in each sliding window</p>
+            <span class="tag tag-hard">Hard</span>
+          </div>
+          <div class="sample-card" onclick="document.getElementById('problem-input').value=SAMPLE_MERGE">
+            <h4>#56. Merge Intervals</h4>
+            <p>Merge overlapping intervals</p>
+            <span class="tag tag-medium">Medium</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  AZURE OPENAI API CALL
+// ════════════════════════════════════════════════════════════════════
+async function handleGenerate() {
+  const problem = document.getElementById('problem-input').value.trim();
+  const errEl = document.getElementById('landing-error');
+  const btn = document.getElementById('gen-btn');
+
+  errEl.className = 'error-msg';
+  if (!envConfig.endpoint || !envConfig.credential) {
+    errEl.textContent = 'Missing .env config. Add AZURE_INFERENCE_ENDPOINT and AZURE_INFERENCE_CREDENTIAL to your .env file.';
+    errEl.className = 'error-msg show'; return;
+  }
+  if (!problem) { errEl.textContent = 'Please paste a LeetCode problem.'; errEl.className = 'error-msg show'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+  showLoadingOverlay('Analyzing problem & building levels...');
+
+  try {
+    const questData = await callAzureOpenAI(problem);
+    hideLoadingOverlay();
+    startQuest(questData);
+  } catch (e) {
+    hideLoadingOverlay();
+    btn.disabled = false;
+    btn.innerHTML = '✨ Generate Visual Explanation';
+    errEl.textContent = 'Error: ' + (e.message || 'Failed to generate. Check your .env config and try again.');
+    errEl.className = 'error-msg show';
+    console.error(e);
+  }
+}
+
+function showLoadingOverlay(text) {
+  document.getElementById('loading-overlay')?.remove();
+  const d = document.createElement('div');
+  d.className = 'loading-overlay'; d.id = 'loading-overlay';
+  d.innerHTML = `<div class="big-spinner"></div><p>${text}</p><p class="substep">Using ${escapeHTML(envConfig.model)} — this may take 15-30 seconds...</p>`;
+  document.body.appendChild(d);
+}
+function hideLoadingOverlay() { document.getElementById('loading-overlay')?.remove(); }
+
+async function callAzureOpenAI(problem) {
+  const prompt = buildPrompt(problem);
+  const endpoint = envConfig.endpoint.replace(/\/$/, '');
+  const model = envConfig.model;
+  const apiVersion = '2024-12-01-preview';
+  const url = `${endpoint}/deployments/${model}/chat/completions?api-version=${apiVersion}`;
+
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': envConfig.credential,
+    },
+    body: JSON.stringify({
+      messages: [
+        { role: 'system', content: 'You are an expert DSA teacher. You MUST respond with valid JSON only — no markdown, no commentary.' },
+        { role: 'user', content: prompt }
+      ],
+      max_completion_tokens: 16000,
+      response_format: { type: 'json_object' },
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Azure API returned ${resp.status}`);
+  }
+  const data = await resp.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Empty response from Azure OpenAI');
+
+  let parsed;
+  try {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('No JSON');
+    parsed = JSON.parse(m[0]);
+  } catch (e) {
+    console.error('Raw:', text);
+    throw new Error('Failed to parse response. Try again.');
+  }
+  if (!parsed.title || !parsed.levels?.length) throw new Error('Invalid response structure. Try again.');
+  parsed.levels.forEach((l, i) => { if (!Array.isArray(l.sections)) l.sections = []; });
+  return parsed;
+}
+
+function buildPrompt(problem) {
+  return `You are an expert DSA teacher creating a gamified, visual, step-by-step learning experience for a LeetCode problem. Break it down so the learner derives the solution themselves through progressive "aha moments."
+
+PROBLEM:
+${problem}
+
+TASK: Return a strict JSON object with this structure:
+
+{
+  "title": "Short problem title",
+  "difficulty": "Easy|Medium|Hard",
+  "pattern": "Main algorithmic pattern name",
+  "levels": [ /* 4-6 levels, each with sections */ ]
+}
+
+Each level:
+{
+  "title": "3-5 word title",
+  "subtitle": "What the learner discovers here",
+  "sections": [ /* array of section objects */ ]
+}
+
+SECTION TYPES — use these building blocks:
+
+1. EXPLANATION — teach a concept:
+{
+  "type": "explanation",
+  "title": "Heading",
+  "paragraphs": ["Text paragraph 1 (supports **bold** and \`code\`)", "..."],
+  "keyInsight": "One-line aha moment (optional)"
+}
+
+2. ARRAY_VIS — visualize an array/list with colored highlights:
+{
+  "type": "array_vis",
+  "title": "Title (optional)",
+  "description": "What this shows",
+  "array": [1, 3, 2, 6],
+  "highlights": [
+    {"indices": [0, 2], "color": "green", "label": "Selected"},
+    {"indices": [1], "color": "yellow", "label": "Current"}
+  ],
+  "showIndices": true
+}
+Valid colors: green, blue, yellow, red, purple, pink
+
+3. QUIZ — multiple choice (used to gate progression):
+{
+  "type": "quiz",
+  "question": "Question text?",
+  "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+  "correctIndex": 1,
+  "explanationCorrect": "Why correct",
+  "explanationWrong": "Hint for wrong answer",
+  "xp": 50
+}
+
+4. WALKTHROUGH — animated step-by-step algorithm trace (VERY IMPORTANT):
+{
+  "type": "walkthrough",
+  "title": "Tracing Example 1",
+  "description": "What we are demonstrating",
+  "steps": [
+    {
+      "description": "What happens in this step",
+      "array": [2, 7, 11, 15],
+      "highlights": [{"indices": [0,1], "color": "green", "label": "Pair"}],
+      "variables": {"target": 9, "sum": "2+7=9"},
+      "note": "Optional insight (optional field)"
+    }
+  ]
+}
+IMPORTANT: every step MUST include "array" and "description". Include 4-8 meaningful steps.
+
+5. SETS_VIS — show named groups of data (hash maps, sets, partitions, stacks, queues):
+{
+  "type": "sets_vis",
+  "title": "Hash Map State",
+  "description": "What this represents (optional)",
+  "sets": [
+    {"name": "Map", "items": ["2→0", "7→1"], "color": "green"},
+    {"name": "Looking for", "items": ["7"], "color": "blue"}
+  ]
+}
+Valid colors: green, blue, red, yellow, purple
+
+6. CODE — final solution (use in last level):
+{
+  "type": "code",
+  "title": "Complete Solution",
+  "language": "python",
+  "code": "class Solution:\\n    def solve(self, ...):\\n        ...",
+  "explanation": "Brief line-by-line walkthrough"
+}
+
+7. INTERACTIVE — let user try selecting correct cells:
+{
+  "type": "interactive",
+  "title": "Try it!",
+  "description": "Select the correct elements...",
+  "interactionType": "select_cells",
+  "array": [2, 7, 11, 15],
+  "correctIndices": [0, 1],
+  "successMessage": "Correct! ...",
+  "failMessage": "Not quite. ...",
+  "xp": 75
+}
+
+RULES:
+- Level 1: Understand the problem (explanation + array_vis + interactive or quiz).
+- Level 2-3: Build intuition from brute force → key insight (explanation + walkthrough + quiz).
+- Level 3-5: Show the optimal approach step by step (walkthrough with many steps + sets_vis if relevant).
+- Last level: Full solution code + summary quiz.
+- Include at LEAST 3 quiz sections total.
+- Include at LEAST 1 walkthrough with 5+ steps using ACTUAL example data from the problem.
+- Include at LEAST 1 interactive section.
+- Use **bold** and \`code\` in text for emphasis.
+- For the walkthrough "array" field: always include the full array, don't abbreviate.
+- For intervals/2D problems, flatten or represent as needed in the array field.
+- Ensure ALL JSON is valid. Use \\n for newlines in code strings.
+- Return ONLY the JSON object. No other text.`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  START QUEST
+// ════════════════════════════════════════════════════════════════════
+function startQuest(questData) {
+  state.questData = questData;
+  state.xp = 0;
+  state.currentLevel = 1;
+  state.levelsCompleted = new Set();
+  state.levelsUnlocked = new Set([1]);
+
+  let totalXP = 0;
+  questData.levels.forEach(l => l.sections.forEach(s => {
+    if (s.xp) totalXP += s.xp;
+    else if (s.type === 'quiz') totalXP += 50;
+    else if (s.type === 'interactive') totalXP += 75;
+  }));
+  totalXP += questData.levels.length * 25;
+  state.maxXP = totalXP || 300;
+
+  document.getElementById('xp-section').style.display = 'flex';
+  document.getElementById('back-btn').style.display = 'block';
+  document.getElementById('xp-fill').style.width = '0%';
+  document.getElementById('xp-label').textContent = '0 / ' + state.maxXP + ' XP';
+
+  document.getElementById('app').innerHTML = `
+    <div class="level-nav" id="level-nav"></div>
+    <div class="main" id="main-content"></div>
+  `;
+  renderLevelNav();
+  renderCurrentLevel();
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  RENDER CURRENT LEVEL
+// ════════════════════════════════════════════════════════════════════
+function renderCurrentLevel() {
+  const level = state.questData.levels[state.currentLevel - 1];
+  if (!level) return;
+  const lvl = state.currentLevel;
+  const total = state.questData.levels.length;
+
+  let html = `
+    <div class="fade-in" style="text-align:center;margin-bottom:20px">
+      <div style="display:inline-block;font-size:.72rem;font-weight:700;padding:3px 12px;border-radius:20px;background:var(--accent2);color:white;margin-bottom:6px">
+        LEVEL ${lvl} of ${total}${state.questData.pattern ? ' — ' + escapeHTML(state.questData.pattern) : ''}
+      </div>
+      <h2 style="font-size:1.45rem;margin-bottom:4px">${escapeHTML(level.title)}</h2>
+      <p style="color:var(--text-dim);font-size:.9rem">${escapeHTML(level.subtitle || '')}</p>
+    </div>
+  `;
+
+  level.sections.forEach((sec, si) => {
+    const sid = 's-' + lvl + '-' + si;
+    html += '<div class="fade-in" id="' + sid + '" style="animation-delay:' + (si * 0.08) + 's">';
+    html += renderSection(sec, sid);
+    html += '</div>';
+  });
+
+  html += `
+    <div class="btn-row" style="margin-top:24px">
+      <button class="btn btn-success" onclick="handleLevelComplete(${lvl})">
+        ${lvl < total ? 'Complete Level & Continue →' : '🏆 Finish Quest!'}
+      </button>
+    </div>
+  `;
+
+  document.getElementById('main-content').innerHTML = html;
+
+  // Post-render init
+  level.sections.forEach((sec, si) => {
+    const sid = 's-' + lvl + '-' + si;
+    postInitSection(sec, sid);
+  });
+}
+
+window.handleLevelComplete = function(lvl) {
+  addXP(25);
+  completeLevel(lvl);
+  const total = state.questData.levels.length;
+  if (lvl < total) {
+    state.currentLevel = lvl + 1;
+    renderLevelNav();
+    renderCurrentLevel();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    shootConfetti();
+    document.getElementById('main-content').innerHTML += `
+      <div class="card fade-in" style="text-align:center;border-color:var(--green);margin-top:20px">
+        <h3 style="color:var(--green);font-size:1.4rem">🏆 Quest Complete!</h3>
+        <p style="margin-top:8px">You've mastered <strong>${escapeHTML(state.questData.title)}</strong>!</p>
+        <p style="margin-top:4px">Total XP: <strong style="color:var(--yellow)">${state.xp}</strong></p>
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn btn-primary" onclick="showLanding()">← Try Another Problem</button>
+        </div>
+      </div>
+    `;
+  }
+};
+
+// ════════════════════════════════════════════════════════════════════
+//  SECTION RENDERERS
+// ════════════════════════════════════════════════════════════════════
+function renderSection(s, id) {
+  switch (s.type) {
+    case 'explanation': return renderExplanation(s);
+    case 'array_vis': return renderArrayVis(s);
+    case 'quiz': return renderQuiz(s, id);
+    case 'walkthrough': return renderWalkthrough(s, id);
+    case 'sets_vis': return renderSetsVis(s);
+    case 'code': return renderCode(s);
+    case 'interactive': return renderInteractive(s, id);
+    default: return '<div class="card"><p style="color:var(--text-dim)">Section: ' + escapeHTML(s.type || 'unknown') + '</p></div>';
+  }
+}
+
+function postInitSection(s, id) {
+  if (s.type === 'walkthrough') initWalkthrough(s, id);
+  if (s.type === 'interactive') initInteractive(s, id);
+}
+
+// ─── EXPLANATION ───
+function renderExplanation(s) {
+  let h = '<div class="card"><h3>' + escapeHTML(s.title || '📖 Explanation') + '</h3>';
+  (s.paragraphs || []).forEach(p => h += '<p style="margin-top:8px">' + fmt(p) + '</p>');
+  if (s.keyInsight) h += '<div class="explanation-box" style="margin-top:12px">💡 <strong>Key Insight:</strong> ' + fmt(s.keyInsight) + '</div>';
+  h += '</div>';
+  return h;
+}
+
+// ─── ARRAY VIS ───
+function renderArrayVis(s) {
+  let h = '<div class="card">';
+  if (s.title) h += '<h3>' + escapeHTML(s.title) + '</h3>';
+  if (s.description) h += '<p style="margin-bottom:8px">' + fmt(s.description) + '</p>';
+  h += buildArrayHTML(s.array || [], s.highlights, s.showIndices !== false);
+  if (s.highlights?.length) {
+    h += '<div style="display:flex;gap:12px;justify-content:center;margin-top:8px;flex-wrap:wrap">';
+    s.highlights.forEach(hl => {
+      h += '<span style="font-size:.76rem;color:var(--text-dim)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;border:2px solid var(--' + colorToVar(hl.color) + ');vertical-align:middle;margin-right:3px"></span>' + escapeHTML(hl.label || '') + '</span>';
+    });
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+// ─── QUIZ ───
+function renderQuiz(s, id) {
+  let h = '<div class="card"><h3>❓ Quiz</h3>';
+  h += '<p style="margin-bottom:10px">' + fmt(s.question) + '</p>';
+  (s.options || []).forEach((opt, i) => {
+    h += '<button class="quiz-option" data-sid="' + id + '" data-oi="' + i + '">' + fmt(opt) + '</button>';
+  });
+  h += '<div class="feedback" id="fb-' + id + '"></div></div>';
+
+  // Attach after render via event delegation (handled in postInit isn't needed; use onclick below)
+  // We'll use a global click handler approach
+  setTimeout(() => {
+    document.querySelectorAll('[data-sid="' + id + '"]').forEach(btn => {
+      btn.addEventListener('click', function handler() {
+        const oi = parseInt(this.dataset.oi);
+        handleQuizClick(id, oi, s);
+      }, { once: true });
+    });
+  }, 50);
+
+  return h;
+}
+
+function handleQuizClick(id, chosen, s) {
+  const correct = s.correctIndex ?? 0;
+  const btns = document.querySelectorAll('[data-sid="' + id + '"]');
+  btns.forEach((b, i) => {
+    if (i === correct) b.classList.add('correct');
+    else if (i === chosen && chosen !== correct) b.classList.add('wrong');
+    b.style.pointerEvents = 'none';
+  });
+  const fb = document.getElementById('fb-' + id);
+  if (chosen === correct) {
+    fb.className = 'feedback show success';
+    fb.textContent = '✅ ' + (s.explanationCorrect || 'Correct!');
+    addXP(s.xp || 50);
+  } else {
+    fb.className = 'feedback show error';
+    fb.textContent = '❌ ' + (s.explanationWrong || 'Not quite. The correct answer is highlighted above.');
+  }
+}
+
+// ─── WALKTHROUGH ───
+function renderWalkthrough(s, id) {
+  let h = '<div class="card"><h3>🔄 ' + escapeHTML(s.title || 'Step-by-Step Walkthrough') + '</h3>';
+  if (s.description) h += '<p style="margin-bottom:8px">' + fmt(s.description) + '</p>';
+  h += '<div id="wt-' + id + '"></div></div>';
+  return h;
+}
+
+function initWalkthrough(s, id) {
+  const steps = s.steps;
+  if (!steps?.length) return;
+  let cur = 0, timer = null;
+
+  function render() {
+    const el = document.getElementById('wt-' + id);
+    if (!el) return;
+    const step = steps[cur];
+    let h = '<div class="step-counter">Step ' + (cur + 1) + ' / ' + steps.length + '</div>';
+    h += '<div class="progress-track"><div class="progress-fill" style="width:' + ((cur + 1) / steps.length * 100) + '%"></div></div>';
+
+    if (step.array) h += buildArrayHTML(step.array, step.highlights, true);
+
+    if (step.variables && Object.keys(step.variables).length) {
+      h += '<div class="step-display"><div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">';
+      for (const [k, v] of Object.entries(step.variables)) {
+        h += '<div><span class="label">' + escapeHTML(k) + '</span><br><span class="val">' + escapeHTML(String(v)) + '</span></div>';
+      }
+      h += '</div></div>';
+    }
+
+    h += '<div class="explanation-box">' + fmt(step.description) + '</div>';
+    if (step.note) h += '<div style="margin-top:6px;font-size:.8rem;color:var(--accent3)">💡 ' + fmt(step.note) + '</div>';
+
+    h += '<div class="step-controls">';
+    h += '<button class="btn btn-secondary btn-sm" onclick="wtNav(\'' + id + '\',-1)"' + (cur <= 0 ? ' disabled' : '') + '>← Prev</button>';
+    h += '<button class="btn btn-primary btn-sm" onclick="wtNav(\'' + id + '\',1)"' + (cur >= steps.length - 1 ? ' disabled' : '') + '>Next →</button>';
+    h += '<button class="btn btn-secondary btn-sm" onclick="wtAuto(\'' + id + '\')">▶ Auto</button>';
+    h += '<button class="btn btn-secondary btn-sm" onclick="wtNav(\'' + id + '\',0)">↺</button>';
+    h += '</div>';
+    el.innerHTML = h;
+  }
+
+  const key = '__wt_' + id;
+  window[key] = { cur: 0, steps, render, timer: null };
+
+  render();
+}
+
+window.wtNav = function(id, dir) {
+  const w = window['__wt_' + id]; if (!w) return;
+  if (w.timer) { clearInterval(w.timer); w.timer = null; }
+  if (dir === 0) w.cur = 0;
+  else if (dir === -1 && w.cur > 0) w.cur--;
+  else if (dir === 1 && w.cur < w.steps.length - 1) w.cur++;
+  // sync closure
+  const renderFn = w.render;
+  // We need to update the closure's cur... use a trick
+  // Actually, let's refactor so render reads from w.cur
+  const el = document.getElementById('wt-' + id);
+  if (!el) return;
+  renderWalkthroughStep(w, id);
+};
+
+window.wtAuto = function(id) {
+  const w = window['__wt_' + id]; if (!w) return;
+  if (w.timer) { clearInterval(w.timer); w.timer = null; return; }
+  w.timer = setInterval(() => {
+    if (w.cur >= w.steps.length - 1) { clearInterval(w.timer); w.timer = null; return; }
+    w.cur++;
+    renderWalkthroughStep(w, id);
+  }, 1200);
+};
+
+function renderWalkthroughStep(w, id) {
+  const el = document.getElementById('wt-' + id);
+  if (!el) return;
+  const step = w.steps[w.cur];
+  let h = '<div class="step-counter">Step ' + (w.cur + 1) + ' / ' + w.steps.length + '</div>';
+  h += '<div class="progress-track"><div class="progress-fill" style="width:' + ((w.cur + 1) / w.steps.length * 100) + '%"></div></div>';
+
+  if (step.array) h += buildArrayHTML(step.array, step.highlights, true);
+
+  if (step.variables && Object.keys(step.variables).length) {
+    h += '<div class="step-display"><div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">';
+    for (const [k, v] of Object.entries(step.variables)) {
+      h += '<div><span class="label">' + escapeHTML(k) + '</span><br><span class="val">' + escapeHTML(String(v)) + '</span></div>';
+    }
+    h += '</div></div>';
+  }
+
+  h += '<div class="explanation-box">' + fmt(step.description) + '</div>';
+  if (step.note) h += '<div style="margin-top:6px;font-size:.8rem;color:var(--accent3)">💡 ' + fmt(step.note) + '</div>';
+
+  h += '<div class="step-controls">';
+  h += '<button class="btn btn-secondary btn-sm" onclick="wtNav(\'' + id + '\',-1)"' + (w.cur <= 0 ? ' disabled' : '') + '>← Prev</button>';
+  h += '<button class="btn btn-primary btn-sm" onclick="wtNav(\'' + id + '\',1)"' + (w.cur >= w.steps.length - 1 ? ' disabled' : '') + '>Next →</button>';
+  h += '<button class="btn btn-secondary btn-sm" onclick="wtAuto(\'' + id + '\')">▶ Auto</button>';
+  h += '<button class="btn btn-secondary btn-sm" onclick="wtNav(\'' + id + '\',0)">↺</button>';
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+// ─── SETS VIS ───
+function renderSetsVis(s) {
+  let h = '<div class="card">';
+  if (s.title) h += '<h3>' + escapeHTML(s.title) + '</h3>';
+  if (s.description) h += '<p style="margin-bottom:8px">' + fmt(s.description) + '</p>';
+  h += '<div class="sets-row">';
+  (s.sets || []).forEach(set => {
+    h += '<div class="set-box"><h4>' + escapeHTML(set.name) + '</h4><div class="set-items">';
+    (set.items || []).forEach(item => {
+      h += '<span class="set-item ' + (set.color || 'blue') + '">' + escapeHTML(String(item)) + '</span>';
+    });
+    h += '</div></div>';
+  });
+  h += '</div></div>';
+  return h;
+}
+
+// ─── CODE ───
+function renderCode(s) {
+  const cid = 'code-' + Math.random().toString(36).slice(2, 8);
+  let h = '<div class="card"><h3>💻 ' + escapeHTML(s.title || 'Solution Code') + '</h3>';
+  if (s.explanation) h += '<p style="margin-bottom:8px">' + fmt(s.explanation) + '</p>';
+  h += '<button class="btn btn-secondary btn-sm" id="reveal-' + cid + '" onclick="document.getElementById(\'' + cid + '\').style.display=\'block\';this.style.display=\'none\'">👁 Reveal Code</button>';
+  h += '<div class="code-block" id="' + cid + '" style="display:none">' + escapeHTML(s.code || '') + '</div>';
+  h += '</div>';
+  return h;
+}
+
+// ─── INTERACTIVE ───
+function renderInteractive(s, id) {
+  let h = '<div class="card"><h3>🎮 ' + escapeHTML(s.title || 'Try It!') + '</h3>';
+  if (s.description || s.goal) h += '<p style="margin-bottom:8px">' + fmt(s.description || s.goal || '') + '</p>';
+  h += '<div id="int-' + id + '"></div></div>';
+  return h;
+}
+
+function initInteractive(s, id) {
+  if (s.interactionType !== 'select_cells' || !s.array) return;
+  const container = document.getElementById('int-' + id);
+  if (!container) return;
+  const selected = new Set();
+  const correctSet = new Set(s.correctIndices || []);
+
+  function render() {
+    const hl = [{ indices: Array.from(selected), color: 'blue', label: 'Selected' }];
+    let h = buildArrayHTML(s.array, hl, true, true);
+    h += '<div class="feedback" id="intfb-' + id + '"></div>';
+    h += '<div class="btn-row"><button class="btn btn-secondary btn-sm" onclick="intReset(\'' + id + '\')">Reset</button>';
+    h += '<button class="btn btn-primary btn-sm" onclick="intCheck(\'' + id + '\')">Check ✓</button></div>';
+    container.innerHTML = h;
+
+    container.querySelectorAll('.arr-cell').forEach(cell => {
+      cell.classList.add('clickable');
+      cell.addEventListener('click', () => {
+        const idx = parseInt(cell.dataset.idx);
+        if (selected.has(idx)) selected.delete(idx); else selected.add(idx);
+        render();
+      });
+    });
+  }
+
+  window['__int_' + id] = { selected, correctSet, section: s, render };
+  render();
+}
+
+window.intReset = function(id) { const d = window['__int_' + id]; if (d) { d.selected.clear(); d.render(); } };
+window.intCheck = function(id) {
+  const d = window['__int_' + id]; if (!d) return;
+  const fb = document.getElementById('intfb-' + id);
+  const sa = Array.from(d.selected).sort((a,b)=>a-b);
+  const ca = Array.from(d.correctSet).sort((a,b)=>a-b);
+  const ok = sa.length === ca.length && sa.every((v,i) => v === ca[i]);
+  if (ok) {
+    fb.className = 'feedback show success';
+    fb.textContent = '✅ ' + (d.section.successMessage || 'Correct!');
+    addXP(d.section.xp || 75);
+  } else {
+    fb.className = 'feedback show error';
+    fb.textContent = '❌ ' + (d.section.failMessage || 'Not quite. Try again!');
+  }
+};
+
+// ════════════════════════════════════════════════════════════════════
+//  BUILDING BLOCKS
+// ════════════════════════════════════════════════════════════════════
+function buildArrayHTML(arr, highlights, showIdx, clickable) {
+  if (!arr?.length) return '';
+  const cm = {};
+  (highlights || []).forEach(hl => {
+    (hl.indices || []).forEach(i => { if (i >= 0 && i < arr.length) cm[i] = hl.color || 'blue'; });
+  });
+  let h = '<div class="array-vis">';
+  arr.forEach((v, i) => {
+    const cc = cm[i] ? ' highlight-' + cm[i] : '';
+    const ck = clickable ? ' clickable' : '';
+    h += '<div class="arr-cell' + cc + ck + '" data-idx="' + i + '">' + escapeHTML(String(v));
+    if (showIdx) h += '<span class="idx">' + i + '</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+function colorToVar(c) {
+  return { green:'green', blue:'accent', yellow:'yellow', red:'red', purple:'accent2', pink:'accent3' }[c] || 'accent';
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fmt(s) {
+  let o = escapeHTML(s);
+  o = o.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  o = o.replace(/`(.*?)`/g, '<code>$1</code>');
+  o = o.replace(/\n/g, '<br>');
+  return o;
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  CONFETTI
+// ════════════════════════════════════════════════════════════════════
+function shootConfetti() {
+  const c = document.getElementById('confetti-canvas');
+  const ctx = c.getContext('2d');
+  c.width = innerWidth; c.height = innerHeight;
+  const ps = [], cols = ['#38bdf8','#4ade80','#facc15','#f472b6','#818cf8','#c084fc'];
+  for (let i = 0; i < 150; i++) ps.push({
+    x: Math.random()*c.width, y: -10-Math.random()*200,
+    vx: (Math.random()-.5)*6, vy: Math.random()*4+2,
+    sz: Math.random()*6+3, co: cols[~~(Math.random()*cols.length)],
+    r: Math.random()*360, rs: (Math.random()-.5)*10, l: 1,
+  });
+  let f = 0;
+  (function go() {
+    ctx.clearRect(0,0,c.width,c.height);
+    let alive = false;
+    ps.forEach(p => {
+      if (p.l <= 0) return; alive = true;
+      p.x += p.vx; p.y += p.vy; p.vy += .1; p.r += p.rs; p.l -= .008;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r*Math.PI/180);
+      ctx.fillStyle = p.co; ctx.globalAlpha = p.l;
+      ctx.fillRect(-p.sz/2,-p.sz/2,p.sz,p.sz*.6); ctx.restore();
+    });
+    if (alive && f++ < 300) requestAnimationFrame(go);
+    else ctx.clearRect(0,0,c.width,c.height);
+  })();
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════════
+(async () => {
+  await loadEnv();
+  showLanding();
+})();
+</script>
+</body>
+</html>
